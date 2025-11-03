@@ -1,0 +1,114 @@
+========================================
+RAILWAY.APP DEPLOYMENT GUIDE - Chordis
+========================================
+
+STEP 1: PREPARE YOUR CODE
+--------------------------
+1. Create a GitHub account if you don't have one: https://github.com/
+2. Create a new repository (call it "chordis" or "music-analyzer")
+3. Push your code to GitHub:
+
+   git init
+   git add .
+   git commit -m "Initial commit - Chordis music analysis app"
+   git branch -M main
+   git remote add origin https://github.com/YOUR_USERNAME/chordis.git
+   git push -u origin main
+
+
+STEP 2: DEPLOY TO RAILWAY
+--------------------------
+1. Go to https://railway.app/
+2. Click "Start a New Project"
+3. Click "Deploy from GitHub repo"
+4. Authorize Railway to access your GitHub
+5. Select your "chordis" repository
+6. Railway will auto-detect it's a Python app and start deploying!
+
+
+STEP 3: CONFIGURE ENVIRONMENT VARIABLES
+----------------------------------------
+After deployment, click on your project → "Variables" tab → Add these:
+
+Required:
+- GENIUS_ACCESS_TOKEN=your_genius_api_token_here
+- SECRET_KEY=your_secret_key_here (generate random string)
+- FLASK_ENV=production
+
+Optional (for music recognition):
+- ACRCLOUD_ACCESS_KEY=your_key
+- ACRCLOUD_ACCESS_SECRET=your_secret
+- ACRCLOUD_HOST=your_host
+- AUDD_API_TOKEN=your_token
+
+Optional (for email):
+- MAIL_SERVER=smtp.gmail.com
+- MAIL_PORT=587
+- MAIL_USERNAME=your_email@gmail.com
+- MAIL_PASSWORD=your_app_password
+
+
+STEP 4: DATABASE SETUP
+----------------------
+Railway automatically provisions PostgreSQL if needed, but your app uses SQLite.
+For production, you should:
+
+Option A: Keep SQLite (simple):
+   - SQLite file is created automatically
+   - Works fine for small-medium traffic
+
+Option B: Use PostgreSQL (better for scale):
+   - In Railway: Add "PostgreSQL" service
+   - Update api.py to use DATABASE_URL environment variable
+
+
+STEP 5: GET YOUR PUBLIC URL
+----------------------------
+After deployment completes:
+1. Go to your project → "Settings"
+2. Click "Generate Domain"
+3. You'll get a URL like: https://chordis-production.up.railway.app
+4. Share this with your survey participants!
+
+
+TROUBLESHOOTING
+---------------
+If deployment fails:
+
+1. Check build logs in Railway dashboard
+2. Common issues:
+   - Missing requirements.txt dependencies
+   - Port configuration (Railway uses $PORT)
+   - Database initialization
+   
+3. View logs: Railway dashboard → "Deployments" → Click on deployment → "Logs"
+
+
+COSTS
+-----
+- First $5/month FREE
+- After that: ~$5-20/month depending on usage
+- Add credit card to continue after free credit
+
+
+TESTING YOUR DEPLOYED APP
+--------------------------
+Once deployed:
+1. Visit your Railway URL
+2. Test all features:
+   - Search songs
+   - YouTube analysis
+   - File upload
+   - Tutorials
+   - Authentication
+   
+3. Share URL with beta testers for feedback!
+
+
+NEED HELP?
+----------
+Contact Railway support: https://railway.app/help
+Or check their docs: https://docs.railway.app/
+
+
+

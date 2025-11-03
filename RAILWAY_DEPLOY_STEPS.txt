@@ -1,0 +1,110 @@
+===============================================
+RAILWAY.APP DEPLOYMENT - QUICK START GUIDE
+===============================================
+
+BEFORE YOU START:
+✓ I've already prepared all deployment files for you!
+  - Procfile (tells Railway how to run your app)
+  - railway.json (Railway configuration)
+  - requirements.txt (updated with gunicorn)
+  - runtime.txt (Python version)
+  - .gitignore (files to exclude)
+  - README.md (project documentation)
+
+
+STEP-BY-STEP DEPLOYMENT:
+===============================================
+
+STEP 1: PUSH TO GITHUB
+----------------------
+Open terminal/command prompt in your project folder and run:
+
+  git init
+  git add .
+  git commit -m "Initial commit - Chordis app"
+
+Then create a repository on GitHub.com and push:
+
+  git remote add origin https://github.com/YOUR_USERNAME/chordis.git
+  git branch -M main
+  git push -u origin main
+
+
+STEP 2: DEPLOY ON RAILWAY
+--------------------------
+1. Go to: https://railway.app/
+2. Click "Login" → Sign in with GitHub
+3. Click "New Project"
+4. Click "Deploy from GitHub repo"
+5. Select your "chordis" repository
+6. Railway will start building automatically!
+
+
+STEP 3: ADD ENVIRONMENT VARIABLES
+----------------------------------
+While it's building, add these variables:
+
+Click your project → "Variables" tab → Add:
+
+REQUIRED:
+  SECRET_KEY = (generate random string, e.g., "kj2h3k4j5h6k7j8h9k0")
+  GENIUS_ACCESS_TOKEN = (get from https://genius.com/api-clients)
+  FLASK_ENV = production
+
+OPTIONAL (add later if needed):
+  ACRCLOUD_ACCESS_KEY = your_key
+  MAIL_SERVER = smtp.gmail.com
+  MAIL_USERNAME = your_email@gmail.com
+
+
+STEP 4: GENERATE PUBLIC URL
+----------------------------
+1. Click "Settings" tab
+2. Scroll to "Domains"
+3. Click "Generate Domain"
+4. You'll get URL like: chordis-production.up.railway.app
+5. THIS IS YOUR PUBLIC URL! Share it with testers!
+
+
+STEP 5: TEST YOUR DEPLOYED APP
+-------------------------------
+1. Visit your Railway URL
+2. Test features:
+   ✓ Search songs
+   ✓ YouTube analysis
+   ✓ File upload
+   ✓ Sign up / Login
+   ✓ Tutorials
+3. If something doesn't work, check logs in Railway dashboard
+
+
+TROUBLESHOOTING:
+===============================================
+
+Problem: Build fails
+Solution: Check "Deployments" → "Logs" for errors
+
+Problem: App runs but features don't work
+Solution: Make sure you added environment variables (especially GENIUS_ACCESS_TOKEN)
+
+Problem: Database errors
+Solution: Railway auto-creates SQLite. If you need PostgreSQL, add it as a service.
+
+Problem: Timeout errors
+Solution: Increase timeout in Procfile (already set to 120 seconds)
+
+
+COSTS:
+===============================================
+✓ First $5 FREE per month
+✓ Enough for ~500 deploys or ~2500 hours
+✓ Add credit card to continue after free credit
+✓ Typical cost: $5-10/month for hobby projects
+
+
+YOUR FILES ARE READY!
+===============================================
+All deployment files are created. Just push to GitHub and deploy to Railway!
+
+Questions? Check: https://docs.railway.app/
+

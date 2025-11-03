@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Corner | Chordis</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/chordis-shared.css?v=2.0">
+    <style>
+        .page-header {
+            text-align: center;
+            margin-bottom: var(--space-10);
+        }
+        
+        .page-header h1 {
+            font-size: 3.5rem;
+            margin-bottom: var(--space-3);
+        }
+        
+        .page-header p {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+        }
+        
+        .filters-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: var(--space-6);
+            margin-bottom: var(--space-8);
+            flex-wrap: wrap;
+        }
+        
+        .filter-group {
+            display: flex;
+            gap: var(--space-3);
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            padding: var(--space-3) var(--space-5);
+            border-radius: var(--radius-lg);
+            border: 2px solid var(--border-color);
+            background: var(--bg-overlay);
+            color: var(--text-secondary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-base);
+        }
+        
+        .filter-btn.active {
+            background: var(--gradient-primary);
+            color: white;
+            border-color: transparent;
+            box-shadow: var(--shadow-button);
+        }
+        
+        .filter-btn:hover:not(.active) {
+            border-color: var(--primary-500);
+            transform: translateY(-2px);
+        }
+        
+        .tutorials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: var(--space-6);
+            margin-bottom: var(--space-10);
+        }
+        
+        .tutorial-card {
+            background: var(--bg-overlay);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            transition: all var(--transition-base);
+            cursor: pointer;
+        }
+        
+        .tutorial-card:hover {
+            transform: translateY(-6px);
+            border-color: var(--border-color-hover);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .tutorial-thumbnail {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: var(--gradient-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            color: white;
+        }
+        
+        .tutorial-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .tutorial-content {
+            padding: var(--space-6);
+        }
+        
+        .tutorial-meta {
+            display: flex;
+            gap: var(--space-3);
+            margin-bottom: var(--space-3);
+        }
+        
+        .tutorial-badge {
+            padding: var(--space-1) var(--space-3);
+            border-radius: var(--radius-full);
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        
+        .badge-beginner {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+        }
+        
+        .badge-intermediate {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+        }
+        
+        .badge-advanced {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--error);
+        }
+        
+        .badge-video {
+            background: rgba(59, 130, 246, 0.15);
+            color: #3b82f6;
+        }
+        
+        .badge-text {
+            background: rgba(236, 72, 153, 0.15);
+            color: var(--pink-500);
+        }
+        
+        .badge-interactive {
+            background: rgba(124, 58, 237, 0.15);
+            color: var(--primary-500);
+        }
+        
+        .tutorial-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: var(--space-2);
+            color: var(--text-primary);
+        }
+        
+        .tutorial-description {
+            color: var(--text-secondary);
+            font-size: 0.9375rem;
+            line-height: 1.6;
+            margin-bottom: var(--space-4);
+        }
+        
+        .tutorial-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: var(--space-4);
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .tutorial-duration {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: var(--space-12);
+            color: var(--text-muted);
+        }
+        
+        .empty-state i {
+            font-size: 5rem;
+            opacity: 0.3;
+            margin-bottom: var(--space-6);
+            display: block;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(20px);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            overflow-y: auto;
+        }
+        
+        .modal.show {
+            display: flex !important;
+        }
+        
+        .modal-content {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-2xl);
+            width: 90%;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            margin: var(--space-6) 0;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-6);
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .modal-title {
+            font-size: 1.75rem;
+            font-weight: 800;
+        }
+        
+        .close-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--bg-overlay);
+            border: none;
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all var(--transition-base);
+        }
+        
+        .close-btn:hover {
+            background: var(--error);
+            color: white;
+            transform: rotate(90deg);
+        }
+        
+        .modal-body {
+            padding: var(--space-6);
+        }
+        
+        .video-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%;
+            margin-bottom: var(--space-6);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            background: #000;
+        }
+        
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .tutorial-text-content {
+            line-height: 1.8;
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+        
+        .tutorial-text-content h2, .tutorial-text-content h3 {
+            color: var(--text-primary);
+            margin-top: var(--space-6);
+            margin-bottom: var(--space-4);
+        }
+        
+        .tutorial-text-content p {
+            margin-bottom: var(--space-4);
+        }
+        
+        @media (max-width: 768px) {
+            .page-header h1 {
+                font-size: 2.25rem;
+            }
+            
+            .filters-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .filter-group {
+                justify-content: center;
+            }
+            
+            .tutorials-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .modal-content {
+                width: 95%;
+                max-height: 95vh;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .page-header h1 {
+                font-size: 1.875rem;
+            }
+            
+            .filter-btn {
+                flex: 1;
+                font-size: 0.875rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-content">
+            <a href="/" class="logo">
+                <i class="fas fa-music"></i> Chordis
+            </a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/#features">Features</a>
+                <a href="/chordai">ChordAI</a>
+                <a href="/realtime">Music Recognizer</a>
+                <a href="/library">Library</a>
+                <a href="/tutorials" class="active">Tutorials</a>
+                <a href="/analytics">Analytics</a>
+            </div>
+            <div class="auth-buttons">
+                <div id="auth-buttons">
+                    <button class="btn btn-secondary" onclick="window.location.href='/auth'">
+                        <i class="fas fa-user"></i> Sign In
+                    </button>
+                    <button class="btn btn-primary" onclick="window.location.href='/auth'">
+                        <i class="fas fa-rocket"></i> Get Started
+                    </button>
+                </div>
+                <div id="user-menu" class="user-menu">
+                    <span class="user-info">
+                        <i class="fas fa-user-circle"></i>
+                        <span id="username-display"></span>
+                    </span>
+                    <button class="btn btn-danger btn-sm" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="main">
+        <div class="container">
+            <div class="page-header">
+                <h1><i class="fas fa-graduation-cap"></i> Music Corner</h1>
+                <p>Learn music from scratch - tutorials for all skill levels</p>
+            </div>
+            
+            <div class="filters-section">
+                <div class="filter-group">
+                    <button class="filter-btn active" data-filter="all" onclick="filterByLevel('all')">
+                        <i class="fas fa-th"></i> All Levels
+                    </button>
+                    <button class="filter-btn" data-filter="beginner" onclick="filterByLevel('beginner')">
+                        <i class="fas fa-seedling"></i> Beginner
+                    </button>
+                    <button class="filter-btn" data-filter="intermediate" onclick="filterByLevel('intermediate')">
+                        <i class="fas fa-arrow-up"></i> Intermediate
+                    </button>
+                    <button class="filter-btn" data-filter="advanced" onclick="filterByLevel('advanced')">
+                        <i class="fas fa-star"></i> Advanced
+                    </button>
+                </div>
+                
+                <div class="filter-group">
+                    <button class="filter-btn active" data-filter-type="all" onclick="filterByType('all')">
+                        All Types
+                    </button>
+                    <button class="filter-btn" data-filter-type="video" onclick="filterByType('video')">
+                        <i class="fas fa-video"></i> Video
+                    </button>
+                    <button class="filter-btn" data-filter-type="text" onclick="filterByType('text')">
+                        <i class="fas fa-book"></i> Text
+                    </button>
+                    <button class="filter-btn" data-filter-type="interactive" onclick="filterByType('interactive')">
+                        <i class="fas fa-gamepad"></i> Interactive
+                    </button>
+                </div>
+            </div>
+            
+            <div class="tutorials-grid" id="tutorialsGrid">
+                <div class="empty-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <h3>Loading tutorials...</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tutorial Modal -->
+    <div id="tutorialModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Tutorial</h2>
+                <button class="close-btn" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <div class="empty-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading tutorial...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let allTutorials = [];
+        let filteredTutorials = [];
+        let currentLevel = 'all';
+        let currentType = 'all';
+        
+        // Auth check
+        async function checkAuth() {
+            try {
+                const response = await fetch('/api/current-user', { credentials: 'include' });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.user) {
+                        document.getElementById('auth-buttons').style.display = 'none';
+                        document.getElementById('user-menu').style.display = 'flex';
+                        document.getElementById('username-display').textContent = data.user.username;
+                    }
+                }
+            } catch (error) {
+                console.log('Not logged in');
+            }
+        }
+        
+        async function logout() {
+            await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+            document.getElementById('auth-buttons').style.display = 'flex';
+            document.getElementById('user-menu').style.display = 'none';
+            window.location.reload();
+        }
+        
+        // Load tutorials
+        async function loadTutorials() {
+            try {
+                const response = await fetch('/api/tutorials');
+                const data = await response.json();
+                
+                if (data.success) {
+                    allTutorials = data.tutorials;
+                    filteredTutorials = allTutorials;
+                    displayTutorials();
+                } else {
+                    showError('Failed to load tutorials');
+                }
+            } catch (error) {
+                console.error('Error loading tutorials:', error);
+                showError('Network error. Could not load tutorials.');
+            }
+        }
+        
+        function displayTutorials() {
+            const grid = document.getElementById('tutorialsGrid');
+            
+            if (filteredTutorials.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-search"></i>
+                        <h3>No Tutorials Found</h3>
+                        <p>Try adjusting your filters or check back later for new content!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = filteredTutorials.map(tutorial => `
+                <div class="tutorial-card" onclick="openTutorial(${tutorial.id})">
+                    <div class="tutorial-thumbnail">
+                        ${tutorial.thumbnail ? 
+                            `<img src="${tutorial.thumbnail}" alt="${tutorial.title}">` : 
+                            '<i class="fas fa-music"></i>'
+                        }
+                    </div>
+                    <div class="tutorial-content">
+                        <div class="tutorial-meta">
+                            <span class="tutorial-badge badge-${tutorial.skill_level}">${capitalizeFirst(tutorial.skill_level)}</span>
+                            <span class="tutorial-badge badge-${tutorial.content_type}">
+                                <i class="fas fa-${getTypeIcon(tutorial.content_type)}"></i> ${capitalizeFirst(tutorial.content_type)}
+                            </span>
+                        </div>
+                        <h3 class="tutorial-title">${tutorial.title}</h3>
+                        <p class="tutorial-description">${tutorial.description}</p>
+                        <div class="tutorial-footer">
+                            <div class="tutorial-duration">
+                                <i class="fas fa-clock"></i>
+                                ${tutorial.duration || '10-15'} minutes
+                            </div>
+                            <span style="color: var(--primary-500); font-weight: 600;">
+                                Start Learning <i class="fas fa-arrow-right"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function filterByLevel(level) {
+            currentLevel = level;
+            document.querySelectorAll('[data-filter]').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-filter="${level}"]`).classList.add('active');
+            applyFilters();
+        }
+        
+        function filterByType(type) {
+            currentType = type;
+            document.querySelectorAll('[data-filter-type]').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-filter-type="${type}"]`).classList.add('active');
+            applyFilters();
+        }
+        
+        function applyFilters() {
+            filteredTutorials = allTutorials.filter(tutorial => {
+                const levelMatch = currentLevel === 'all' || tutorial.skill_level === currentLevel;
+                const typeMatch = currentType === 'all' || tutorial.content_type === currentType;
+                return levelMatch && typeMatch;
+            });
+            displayTutorials();
+        }
+        
+        async function openTutorial(id) {
+            const modal = document.getElementById('tutorialModal');
+            const modalBody = document.getElementById('modalBody');
+            const modalTitle = document.getElementById('modalTitle');
+            
+            modal.classList.add('show');
+            
+            modalBody.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading tutorial...</p>
+                </div>
+            `;
+            
+            try {
+                const response = await fetch(`/api/tutorial/${id}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const tutorial = data.tutorial;
+                    modalTitle.textContent = tutorial.title;
+                    
+                    let content = '';
+                    
+                    // Video tutorial
+                    if (tutorial.content_type === 'video' && tutorial.video_url) {
+                        const videoId = extractYouTubeId(tutorial.video_url);
+                        if (videoId) {
+                            content = `
+                                <div class="video-container">
+                                    <iframe src="https://www.youtube.com/embed/${videoId}" 
+                                            allowfullscreen></iframe>
+                                </div>
+                            `;
+                        }
+                    }
+                    
+                    // Text content
+                    if (tutorial.content) {
+                        content += `<div class="tutorial-text-content">${tutorial.content}</div>`;
+                    }
+                    
+                    if (!content) {
+                        content = '<p>No content available for this tutorial yet.</p>';
+                    }
+                    
+                    modalBody.innerHTML = content;
+                } else {
+                    modalBody.innerHTML = '<p>Failed to load tutorial details.</p>';
+                }
+            } catch (error) {
+                console.error('Error loading tutorial:', error);
+                modalBody.innerHTML = '<p>Network error. Could not load tutorial.</p>';
+            }
+        }
+        
+        function closeModal() {
+            document.getElementById('tutorialModal').classList.remove('show');
+        }
+        
+        function extractYouTubeId(url) {
+            const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[7].length == 11) ? match[7] : null;
+        }
+        
+        function capitalizeFirst(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+        
+        function getTypeIcon(type) {
+            const icons = {
+                'video': 'video',
+                'text': 'book',
+                'interactive': 'gamepad'
+            };
+            return icons[type] || 'file';
+        }
+        
+        function showError(message) {
+            document.getElementById('tutorialsGrid').innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-triangle" style="color: var(--error);"></i>
+                    <h3>Error</h3>
+                    <p>${message}</p>
+                </div>
+            `;
+        }
+        
+        // Close modal on outside click
+        document.getElementById('tutorialModal').addEventListener('click', (e) => {
+            if (e.target.id === 'tutorialModal') {
+                closeModal();
+            }
+        });
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+            loadTutorials();
+        });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Recognizer | Chordis</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/chordis-shared.css?v=2.0">
+    <style>
+        .realtime-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-6);
+        }
+        
+        .realtime-card {
+            max-width: 700px;
+            width: 100%;
+        }
+        
+        .page-header {
+            text-align: center;
+            margin-bottom: var(--space-10);
+        }
+        
+        .page-header h1 {
+            font-size: 3.5rem;
+            margin-bottom: var(--space-3);
+        }
+        
+        .page-header p {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+        }
+        
+        .mic-container {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            margin: var(--space-10) 0;
+        }
+        
+        .mic-btn {
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            background: var(--gradient-primary);
+            border: none;
+            color: white;
+            font-size: 6rem;
+            cursor: pointer;
+            transition: all var(--transition-base);
+            box-shadow: 0 12px 48px rgba(124, 58, 237, 0.5);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .mic-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity var(--transition-base);
+        }
+        
+        .mic-btn:hover::before {
+            opacity: 1;
+        }
+        
+        .mic-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 16px 64px rgba(124, 58, 237, 0.7);
+        }
+        
+        .mic-btn.listening {
+            background: var(--error);
+            animation: pulse 1.5s infinite;
+        }
+        
+        .mic-btn.listening::after {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            border: 4px solid var(--error);
+            border-radius: 50%;
+            opacity: 0.6;
+            animation: ripple 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 12px 48px rgba(239, 68, 68, 0.5);
+            }
+            50% { 
+                transform: scale(1.08);
+                box-shadow: 0 20px 72px rgba(239, 68, 68, 0.8);
+            }
+        }
+        
+        @keyframes ripple {
+            0% {
+                transform: scale(1);
+                opacity: 0.6;
+            }
+            100% {
+                transform: scale(1.5);
+                opacity: 0;
+            }
+        }
+        
+        .status-display {
+            text-align: center;
+            margin: var(--space-8) 0;
+        }
+        
+        .status-text {
+            font-size: 1.375rem;
+            color: var(--text-secondary);
+            margin-bottom: var(--space-4);
+            font-weight: 600;
+        }
+        
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-2);
+            padding: var(--space-3) var(--space-6);
+            border-radius: var(--radius-full);
+            font-weight: 700;
+            font-size: 1rem;
+            border: 2px solid;
+        }
+        
+        .status-idle {
+            background: rgba(107, 114, 128, 0.15);
+            border-color: rgba(107, 114, 128, 0.3);
+            color: var(--text-muted);
+        }
+        
+        .status-listening {
+            background: var(--error-bg);
+            border-color: var(--error);
+            color: var(--error);
+            animation: pulse-border 2s infinite;
+        }
+        
+        @keyframes pulse-border {
+            0%, 100% { border-color: var(--error); }
+            50% { border-color: rgba(239, 68, 68, 0.5); }
+        }
+        
+        .status-processing {
+            background: var(--info-bg);
+            border-color: var(--info);
+            color: var(--info);
+        }
+        
+        .status-success {
+            background: var(--success-bg);
+            border-color: var(--success);
+            color: var(--success);
+        }
+        
+        .result-container {
+            display: none;
+            margin-top: var(--space-8);
+            padding: var(--space-8);
+            background: var(--bg-overlay);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-2xl);
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .result-header {
+            text-align: center;
+            margin-bottom: var(--space-6);
+        }
+        
+        .result-title {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: var(--space-2);
+        }
+        
+        .result-artist {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+        }
+        
+        .confidence-bar {
+            margin: var(--space-6) 0;
+            padding: var(--space-6);
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: var(--radius-lg);
+        }
+        
+        .confidence-label {
+            font-size: 0.9375rem;
+            color: var(--text-muted);
+            margin-bottom: var(--space-3);
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .confidence-progress {
+            width: 100%;
+            height: 12px;
+            background: var(--bg-overlay);
+            border-radius: var(--radius-full);
+            overflow: hidden;
+        }
+        
+        .confidence-fill {
+            height: 100%;
+            background: var(--gradient-primary);
+            transition: width 0.5s ease;
+            border-radius: var(--radius-full);
+            box-shadow: 0 0 16px rgba(124, 58, 237, 0.5);
+        }
+        
+        .result-actions {
+            display: flex;
+            gap: var(--space-4);
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--space-6);
+            margin-top: var(--space-10);
+        }
+        
+        .feature-card {
+            background: var(--bg-overlay);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            text-align: center;
+            transition: all var(--transition-base);
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-6px);
+            border-color: var(--border-color-hover);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: var(--space-4);
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: block;
+        }
+        
+        .feature-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: var(--space-2);
+            color: var(--text-primary);
+        }
+        
+        .feature-description {
+            color: var(--text-secondary);
+            font-size: 0.9375rem;
+            line-height: 1.6;
+        }
+        
+        .permission-banner {
+            display: none;
+            background: var(--error-bg);
+            border: 2px solid var(--error);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+            margin-bottom: var(--space-6);
+            color: var(--error);
+            font-weight: 600;
+            text-align: center;
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        .permission-banner.show {
+            display: block;
+        }
+        
+        @media (max-width: 768px) {
+            .realtime-container {
+                padding: var(--space-4);
+            }
+            
+            .realtime-card {
+                max-width: 100%;
+            }
+            
+            .page-header h1 {
+                font-size: 2.25rem;
+            }
+            
+            .page-header p {
+                font-size: 1rem;
+            }
+            
+            .mic-btn {
+                width: 160px;
+                height: 160px;
+                font-size: 4rem;
+            }
+            
+            .status-text {
+                font-size: 1.125rem;
+            }
+            
+            .status-indicator {
+                font-size: 0.9375rem;
+                padding: var(--space-2) var(--space-4);
+            }
+            
+            .result-container {
+                padding: var(--space-6);
+            }
+            
+            .result-title {
+                font-size: 1.5rem;
+            }
+            
+            .result-artist {
+                font-size: 1rem;
+            }
+            
+            .result-actions {
+                flex-direction: column;
+                gap: var(--space-3);
+            }
+            
+            .result-actions .btn {
+                width: 100%;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
+                gap: var(--space-4);
+            }
+            
+            .card {
+                padding: var(--space-6);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .realtime-container {
+                padding: var(--space-3);
+            }
+            
+            .page-header h1 {
+                font-size: 1.875rem;
+            }
+            
+            .page-header p {
+                font-size: 0.9375rem;
+            }
+            
+            .mic-btn {
+                width: 140px;
+                height: 140px;
+                font-size: 3.5rem;
+            }
+            
+            .status-text {
+                font-size: 1rem;
+            }
+            
+            .status-indicator {
+                font-size: 0.875rem;
+                padding: var(--space-2) var(--space-3);
+            }
+            
+            .result-container {
+                padding: var(--space-4);
+            }
+            
+            .result-title {
+                font-size: 1.25rem;
+            }
+            
+            .result-artist {
+                font-size: 0.9375rem;
+            }
+            
+            .confidence-bar {
+                padding: var(--space-4);
+            }
+            
+            .feature-card {
+                padding: var(--space-5);
+            }
+            
+            .feature-icon {
+                font-size: 2.5rem;
+            }
+            
+            .feature-title {
+                font-size: 1.125rem;
+            }
+            
+            .card {
+                padding: var(--space-4);
+            }
+        }
+        
+        /* File Upload Styles */
+        .recognition-methods {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-8);
+            margin: var(--space-8) 0;
+        }
+
+        .method-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .method-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: var(--space-6);
+            text-align: center;
+        }
+
+        .upload-zone {
+            width: 100%;
+            min-height: 280px;
+            border: 3px dashed var(--border-color);
+            border-radius: var(--radius-2xl);
+            background: var(--bg-overlay);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-8);
+            cursor: pointer;
+            transition: all var(--transition-base);
+            position: relative;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--primary-500);
+            background: var(--bg-overlay-hover);
+            transform: translateY(-2px);
+        }
+
+        .upload-zone.drag-over {
+            border-color: var(--pink-500);
+            background: rgba(236, 72, 153, 0.1);
+            border-style: solid;
+        }
+
+        .upload-zone.uploading {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: var(--space-4);
+        }
+
+        .upload-text {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--space-2);
+        }
+
+        .upload-hint {
+            font-size: 0.9375rem;
+            color: var(--text-muted);
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .upload-formats {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: var(--space-4);
+            padding: var(--space-3) var(--space-5);
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: var(--radius-full);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .browse-btn {
+            margin-top: var(--space-4);
+            padding: var(--space-3) var(--space-6);
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-lg);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-base);
+        }
+
+        .browse-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(124, 58, 237, 0.4);
+        }
+
+        .file-selected {
+            display: none;
+            margin-top: var(--space-4);
+            padding: var(--space-4);
+            background: var(--success-bg);
+            border: 1px solid var(--success);
+            border-radius: var(--radius-lg);
+            color: var(--success);
+            font-weight: 600;
+            width: 100%;
+            text-align: center;
+        }
+
+        .file-selected.show {
+            display: block;
+        }
+
+        .upload-progress {
+            display: none;
+            width: 100%;
+            margin-top: var(--space-4);
+        }
+
+        .upload-progress.show {
+            display: block;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--bg-overlay);
+            border-radius: var(--radius-full);
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--gradient-primary);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: var(--space-2);
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* Divider */
+        .or-divider {
+            display: none;
+            text-align: center;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin: var(--space-6) 0;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 968px) {
+            .recognition-methods {
+                grid-template-columns: 1fr;
+                gap: var(--space-6);
+            }
+            
+            .or-divider {
+                display: block;
+            }
+            
+            .upload-zone {
+                min-height: 220px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .upload-zone {
+                min-height: 200px;
+                padding: var(--space-6);
+            }
+            
+            .upload-icon {
+                font-size: 3rem;
+            }
+            
+            .upload-text {
+                font-size: 1rem;
+            }
+            
+            .upload-hint {
+                font-size: 0.875rem;
+            }
+            
+            .method-title {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-content">
+            <a href="/" class="logo">
+                <i class="fas fa-music"></i> Chordis
+            </a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/#features">Features</a>
+                <a href="/chordai">ChordAI</a>
+                <a href="/realtime" class="active">Music Recognizer</a>
+                <a href="/library">Library</a>
+                <a href="/tutorials">Tutorials</a>
+                <a href="/analytics">Analytics</a>
+            </div>
+            <div class="auth-buttons">
+                <div id="auth-buttons">
+                    <button class="btn btn-secondary" onclick="window.location.href='/auth'">
+                        <i class="fas fa-user"></i> Sign In
+                    </button>
+                    <button class="btn btn-primary" onclick="window.location.href='/auth'">
+                        <i class="fas fa-rocket"></i> Get Started
+                    </button>
+                </div>
+                <div id="user-menu" class="user-menu">
+                    <span class="user-info">
+                        <i class="fas fa-user-circle"></i>
+                        <span id="username-display"></span>
+                    </span>
+                    <button class="btn btn-danger btn-sm" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="realtime-container">
+        <div class="realtime-card">
+            <div class="page-header">
+                <h1><i class="fas fa-microphone"></i> Music Recognizer</h1>
+                <p>Identify music playing around you instantly</p>
+            </div>
+            
+            <div class="card">
+                <div class="permission-banner" id="permissionBanner">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Microphone Permission Required</strong><br>
+                    Please allow microphone access to use real-time recognition.
+                </div>
+                
+                <div class="recognition-methods">
+                    <!-- Microphone Section -->
+                    <div class="method-section">
+                        <div class="method-title">
+                            <i class="fas fa-microphone"></i> Live Recognition
+                        </div>
+                        <div class="mic-container">
+                            <button class="mic-btn" id="micBtn">
+                                <i class="fas fa-microphone"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="or-divider">
+                        <span>OR</span>
+                    </div>
+                    
+                    <!-- File Upload Section -->
+                    <div class="method-section">
+                        <div class="method-title">
+                            <i class="fas fa-file-audio"></i> Upload Audio File
+                        </div>
+                        <div class="upload-zone" id="uploadZone">
+                            <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                            <div class="upload-text">Drop your audio file here</div>
+                            <div class="upload-hint">or click to browse</div>
+                            <button class="browse-btn" type="button">
+                                <i class="fas fa-folder-open"></i> Browse Files
+                            </button>
+                            <div class="upload-formats">MP3, WAV, OGG, M4A, FLAC, AAC (Max 50MB)</div>
+                            <input type="file" id="fileInput" class="file-input" accept="audio/*,.mp3,.wav,.ogg,.m4a,.flac,.aac">
+                            <div class="file-selected" id="fileSelected">
+                                <i class="fas fa-check-circle"></i> <span id="fileName"></span>
+                            </div>
+                            <div class="upload-progress" id="uploadProgress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="progressFill"></div>
+                                </div>
+                                <div class="progress-text" id="progressText">Uploading...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="status-display">
+                    <div class="status-text" id="statusText">Choose a recognition method above</div>
+                    <div class="status-indicator status-idle" id="statusIndicator">
+                        <i class="fas fa-circle"></i>
+                        Ready
+                    </div>
+                </div>
+                
+                <div class="result-container" id="resultContainer">
+                    <div class="result-header">
+                        <div class="result-title" id="songName">Song Name</div>
+                        <div class="result-artist" id="artistName">Artist Name</div>
+                    </div>
+                    
+                    <div class="confidence-bar">
+                        <div class="confidence-label">
+                            <span>Recognition Confidence</span>
+                            <span id="confidenceText">0%</span>
+                        </div>
+                        <div class="confidence-progress">
+                            <div class="confidence-fill" id="confidenceFill" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="result-actions">
+                        <button class="btn btn-primary btn-lg" onclick="analyzeRecognizedSong()">
+                            <i class="fas fa-wand-magic-sparkles"></i> Analyze This Song
+                        </button>
+                        <button class="btn btn-secondary" onclick="saveToLibrary()">
+                            <i class="fas fa-bookmark"></i> Save to Library
+                        </button>
+                        <button class="btn btn-secondary" onclick="shareResult()">
+                            <i class="fas fa-share"></i> Share
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <i class="fas fa-bolt feature-icon"></i>
+                        <div class="feature-title">Real Recognition</div>
+                        <div class="feature-description">Powered by ACRCloud - recognize real songs from your audio files</div>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <i class="fas fa-database feature-icon"></i>
+                        <div class="feature-title">Massive Database</div>
+                        <div class="feature-description">Access to millions of songs in ACRCloud's global database</div>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <i class="fas fa-bullseye feature-icon"></i>
+                        <div class="feature-title">High Accuracy</div>
+                        <div class="feature-description">Advanced audio fingerprinting for precise song identification</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let isListening = false;
+        let currentResult = null;
+        let selectedFile = null;
+        
+        async function checkAuth() {
+            try {
+                const response = await fetch('/api/current-user', { credentials: 'include' });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.user) {
+                        document.getElementById('auth-buttons').style.display = 'none';
+                        document.getElementById('user-menu').style.display = 'flex';
+                        document.getElementById('username-display').textContent = data.user.username;
+                    }
+                }
+            } catch (error) {
+                console.log('Not logged in');
+            }
+        }
+        
+        async function logout() {
+            await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+            document.getElementById('auth-buttons').style.display = 'flex';
+            document.getElementById('user-menu').style.display = 'none';
+            window.location.reload();
+        }
+        
+        function updateStatus(status, text, indicator) {
+            const statusText = document.getElementById('statusText');
+            const statusIndicator = document.getElementById('statusIndicator');
+            
+            statusText.textContent = text;
+            statusIndicator.className = `status-indicator status-${status}`;
+            statusIndicator.innerHTML = `<i class="fas fa-circle"></i> ${indicator}`;
+        }
+        
+        // ========== MICROPHONE FUNCTIONALITY ==========
+        
+        function toggleListening() {
+            if (!isListening) {
+                startListening();
+            } else {
+                stopListening();
+            }
+        }
+        
+        function startListening() {
+            isListening = true;
+            document.getElementById('micBtn').classList.add('listening');
+            updateStatus('listening', 'Listening for music... Play something!', '🎤 Listening');
+            
+            // Demo mode - simulate recognition
+            setTimeout(() => {
+                if (isListening) {
+                    const demoResults = [
+                        { title: "Bohemian Rhapsody", artist: "Queen", confidence: 95 },
+                        { title: "Hotel California", artist: "Eagles", confidence: 92 },
+                        { title: "Stairway to Heaven", artist: "Led Zeppelin", confidence: 88 },
+                        { title: "Sweet Child O' Mine", artist: "Guns N' Roses", confidence: 90 }
+                    ];
+                    
+                    const randomResult = demoResults[Math.floor(Math.random() * demoResults.length)];
+                    processResult(randomResult);
+                }
+            }, 3500);
+        }
+        
+        function stopListening() {
+            isListening = false;
+            document.getElementById('micBtn').classList.remove('listening');
+            updateStatus('idle', 'Choose a recognition method above', 'Ready');
+        }
+        
+        function processResult(result) {
+            updateStatus('processing', 'Processing audio...', '⚙️ Processing');
+            
+            setTimeout(() => {
+                showResult(result);
+            }, 1500);
+        }
+        
+        function showResult(result) {
+            console.log('showResult called with:', result);
+            currentResult = result;
+            
+            document.getElementById('songName').textContent = result.title;
+            document.getElementById('artistName').textContent = result.artist;
+            document.getElementById('confidenceFill').style.width = result.confidence + '%';
+            document.getElementById('confidenceText').textContent = result.confidence + '%';
+            
+            document.getElementById('resultContainer').style.display = 'block';
+            updateStatus('success', 'Song recognized successfully!', '✅ Recognized');
+            
+            stopListening();
+            
+            console.log('currentResult is now:', currentResult);
+        }
+        
+        // ========== FILE UPLOAD FUNCTIONALITY ==========
+        
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileSelected = document.getElementById('fileSelected');
+        const fileName = document.getElementById('fileName');
+        const uploadProgress = document.getElementById('uploadProgress');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        
+        // Click to browse
+        uploadZone.addEventListener('click', (e) => {
+            if (!uploadZone.classList.contains('uploading')) {
+                fileInput.click();
+            }
+        });
+        
+        // Prevent default drag behaviors
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadZone.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        // Highlight on drag over
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadZone.addEventListener(eventName, () => {
+                uploadZone.classList.add('drag-over');
+            }, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadZone.addEventListener(eventName, () => {
+                uploadZone.classList.remove('drag-over');
+            }, false);
+        });
+        
+        // Handle dropped files
+        uploadZone.addEventListener('drop', (e) => {
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        }, false);
+        
+        // Handle selected files
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+        
+        function handleFile(file) {
+            // Validate file type
+            const validTypes = ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/m4a', 'audio/flac', 'audio/x-m4a', 'audio/aac', 'audio/mp3'];
+            const validExtensions = ['.mp3', '.wav', '.ogg', '.m4a', '.flac', '.aac'];
+            const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+            
+            if (!validTypes.includes(file.type) && !validExtensions.includes(fileExtension)) {
+                updateStatus('idle', 'Invalid file type. Please upload an audio file.', '❌ Error');
+                return;
+            }
+            
+            // Validate file size (50MB)
+            const maxSize = 50 * 1024 * 1024; // 50MB in bytes
+            if (file.size > maxSize) {
+                updateStatus('idle', 'File too large. Maximum size is 50MB.', '❌ Error');
+                return;
+            }
+            
+            selectedFile = file;
+            
+            // Show file selected
+            fileName.textContent = file.name;
+            fileSelected.classList.add('show');
+            
+            // Upload file
+            uploadFile(file);
+        }
+        
+    async function uploadFile(file) {
+        uploadZone.classList.add('uploading');
+        fileSelected.classList.remove('show');
+        uploadProgress.classList.add('show');
+        progressFill.style.width = '0%';
+        progressText.textContent = 'Uploading...';
+        
+        updateStatus('processing', 'Uploading and recognizing with ACRCloud...', '⚙️ Processing');
+        
+        // Hide previous results
+        document.getElementById('resultContainer').style.display = 'none';
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        try {
+            // Animate progress
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += 8;
+                if (progress <= 90) {
+                    progressFill.style.width = progress + '%';
+                }
+            }, 300);
+            
+            console.log('Uploading file to /api/recognize-song:', file.name);
+            
+            const response = await fetch('/api/recognize-song', {
+                method: 'POST',
+                body: formData,
+                credentials: 'include'
+            });
+            
+            clearInterval(progressInterval);
+            progressFill.style.width = '100%';
+            
+            console.log('Response status:', response.status);
+            const data = await response.json();
+            console.log('Response data:', data);
+            
+            if (data.success && data.song) {
+                // Real ACRCloud result
+                progressText.textContent = 'Song recognized!';
+                setTimeout(() => {
+                    const result = {
+                        title: data.song.title,
+                        artist: data.song.artist,
+                        confidence: data.song.confidence || data.song.score || 90
+                    };
+                    console.log('Showing result:', result);
+                    showResult(result);
+                    resetUploadZone();
+                }, 500);
+            } else {
+                // ACRCloud failed - show helpful error
+                const errorMsg = data.error || 'Could not recognize the song';
+                console.error('Recognition failed:', errorMsg);
+                updateStatus('idle', errorMsg, '❌ Error');
+                resetUploadZone();
+            }
+        } catch (error) {
+            console.error('Upload error:', error);
+            updateStatus('idle', 'Network error. Please check if server is running.', '❌ Error');
+            resetUploadZone();
+        }
+    }
+        
+        function resetUploadZone() {
+            uploadZone.classList.remove('uploading');
+            uploadProgress.classList.remove('show');
+            fileSelected.classList.remove('show');
+            progressFill.style.width = '0%';
+            fileInput.value = '';
+            selectedFile = null;
+        }
+        
+        // ========== RESULT ACTIONS ==========
+        
+        async function analyzeRecognizedSong() {
+            console.log('analyzeRecognizedSong called');
+            console.log('currentResult:', currentResult);
+            
+            if (!currentResult) {
+                console.error('No currentResult available!');
+                return;
+            }
+            
+            console.log('Song title:', currentResult.title);
+            console.log('Artist:', currentResult.artist);
+            
+            // Show loading state
+            const btn = document.querySelector('.result-actions .btn-primary');
+            const originalContent = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
+            
+            try {
+                const url = `/?analyze=true&song=${encodeURIComponent(currentResult.title)}&artist=${encodeURIComponent(currentResult.artist)}`;
+                console.log('Redirecting to:', url);
+                window.location.href = url;
+                
+            } catch (error) {
+                console.error('Analysis error:', error);
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+                alert('Analysis failed. Please try again.');
+            }
+        }
+        
+        async function saveToLibrary() {
+            if (!currentResult) return;
+            
+            const btn = document.querySelector('.result-actions .btn-secondary');
+            const originalContent = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            
+            try {
+                // First, get the full analysis (chords + lyrics + YouTube URL)
+                console.log('Getting analysis for:', currentResult.title, 'by', currentResult.artist);
+                
+                const analyzeResponse = await fetch('/api/search-and-analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        title: currentResult.title,
+                        artist: currentResult.artist,
+                        search_query: `${currentResult.artist} ${currentResult.title} official audio`
+                    })
+                });
+                
+                const analyzeData = await analyzeResponse.json();
+                console.log('Analysis data received:', analyzeData);
+                
+                if (!analyzeData.success) {
+                    throw new Error('Could not analyze song');
+                }
+                
+                // Now save to library with YouTube URL
+                const saveResponse = await fetch('/api/save-analysis', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        title: currentResult.title,
+                        artist: currentResult.artist,
+                        chord_data: { chords: analyzeData.chords, key: analyzeData.key, tempo: analyzeData.tempo },
+                        lyrics_data: { lyrics: analyzeData.lyrics },
+                        source_type: 'recognized',
+                        source_url: analyzeData.youtube_url || ''  // Include YouTube URL for playback
+                    })
+                });
+                
+                const saveData = await saveResponse.json();
+                console.log('Save response:', saveData);
+                
+                if (saveData.success) {
+                    btn.innerHTML = '<i class="fas fa-check"></i> Saved!';
+                    setTimeout(() => {
+                        btn.innerHTML = originalContent;
+                        btn.disabled = false;
+                    }, 2000);
+                    
+                    // Show success message
+                    updateStatus('success', `"${currentResult.title}" saved to your library!`, '✅ Saved');
+                } else {
+                    throw new Error(saveData.error || 'Failed to save');
+                }
+                
+            } catch (error) {
+                console.error('Save error:', error);
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+                
+                if (error.message.includes('login') || error.message.includes('auth')) {
+                    alert('Please login to save songs to your library');
+                } else {
+                    alert('Failed to save. ' + error.message);
+                }
+            }
+        }
+        
+        function shareResult() {
+            if (currentResult && navigator.share) {
+                navigator.share({
+                    title: `${currentResult.title} - ${currentResult.artist}`,
+                    text: `I just recognized this song using Chordis!`,
+                    url: window.location.origin
+                });
+            } else if (currentResult) {
+                const text = `"${currentResult.title}" by ${currentResult.artist} - Recognized with Chordis`;
+                navigator.clipboard.writeText(text).then(() => alert('Result copied to clipboard!'));
+            }
+        }
+        
+        async function checkMicrophonePermission() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                stream.getTracks().forEach(track => track.stop());
+                document.getElementById('permissionBanner').classList.remove('show');
+            } catch (error) {
+                document.getElementById('permissionBanner').classList.add('show');
+            }
+        }
+        
+        // Event Listeners
+        document.getElementById('micBtn').addEventListener('click', toggleListening);
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+            checkMicrophonePermission();
+        });
+    </script>
+</body>
+</html>

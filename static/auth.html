@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In | Chordis</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/chordis-shared.css?v=2.0">
+    <style>
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-6);
+        }
+        
+        .auth-card {
+            max-width: 480px;
+            width: 100%;
+        }
+        
+        .auth-header {
+            text-align: center;
+            margin-bottom: var(--space-8);
+        }
+        
+        .auth-header .logo-big {
+            font-size: 3rem;
+            margin-bottom: var(--space-2);
+            display: inline-block;
+        }
+        
+        .auth-header h1 {
+            font-size: 2.25rem;
+            margin-bottom: var(--space-2);
+        }
+        
+        .auth-header p {
+            color: var(--text-muted);
+            font-size: 1.0625rem;
+        }
+        
+        .password-toggle {
+            position: absolute;
+            right: var(--space-4);
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: var(--space-2);
+            transition: all var(--transition-base);
+        }
+        
+        .password-toggle:hover {
+            color: var(--text-primary);
+        }
+        
+        .remember-forgot {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-6);
+            font-size: 0.9375rem;
+        }
+        
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            color: var(--text-secondary);
+        }
+        
+        .remember-me input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+            cursor: pointer;
+        }
+        
+        .forgot-link {
+            color: var(--primary-500);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all var(--transition-base);
+        }
+        
+        .forgot-link:hover {
+            color: var(--pink-500);
+            text-decoration: underline;
+        }
+        
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: var(--space-8) 0;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+        
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border-color);
+        }
+        
+        .divider span {
+            padding: 0 var(--space-4);
+        }
+        
+        .social-login {
+            display: grid;
+            gap: var(--space-3);
+            margin-bottom: var(--space-6);
+        }
+        
+        .social-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-3);
+            padding: var(--space-4);
+            background: var(--bg-overlay);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            color: var(--text-primary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-base);
+        }
+        
+        .social-btn:hover {
+            background: var(--bg-overlay-hover);
+            border-color: var(--border-color-hover);
+            transform: translateY(-2px);
+        }
+        
+        .social-btn i {
+            font-size: 1.25rem;
+        }
+        
+        .auth-footer {
+            margin-top: var(--space-8);
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9375rem;
+        }
+        
+        .auth-footer a {
+            color: var(--primary-500);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all var(--transition-base);
+        }
+        
+        .auth-footer a:hover {
+            color: var(--pink-500);
+        }
+        
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            margin-top: var(--space-6);
+            transition: all var(--transition-base);
+        }
+        
+        .back-link:hover {
+            color: var(--text-primary);
+            transform: translateX(-4px);
+        }
+        
+        .terms-checkbox {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-2);
+            margin-bottom: var(--space-6);
+            font-size: 0.9375rem;
+            color: var(--text-secondary);
+        }
+        
+        .terms-checkbox input {
+            width: auto;
+            margin-top: 0.25rem;
+            cursor: pointer;
+        }
+        
+        .terms-checkbox a {
+            color: var(--primary-500);
+            text-decoration: none;
+        }
+        
+        .terms-checkbox a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Mobile Optimizations */
+        @media (max-width: 768px) {
+            .auth-header h1 {
+                font-size: 2rem;
+            }
+            
+            .auth-header p {
+                font-size: 1rem;
+            }
+            
+            .card {
+                padding: var(--space-6);
+            }
+            
+            .social-btn {
+                font-size: 0.9375rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .auth-container {
+                padding: var(--space-4);
+            }
+            
+            .auth-header .logo-big {
+                font-size: 2.5rem;
+            }
+            
+            .auth-header h1 {
+                font-size: 1.75rem;
+            }
+            
+            .auth-header p {
+                font-size: 0.9375rem;
+            }
+            
+            .card {
+                padding: var(--space-5);
+            }
+            
+            .tabs .tab {
+                font-size: 0.875rem;
+                padding: var(--space-2) var(--space-3);
+            }
+            
+            .tabs .tab i {
+                font-size: 0.875rem;
+            }
+            
+            input,
+            select {
+                font-size: 16px; /* Prevents iOS zoom */
+            }
+            
+            .social-btn {
+                font-size: 0.875rem;
+                padding: var(--space-3);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="logo-big">🎵</div>
+                <h1>Welcome to Chordis</h1>
+                <p>Sign in to your account or create a new one</p>
+            </div>
+            
+            <div class="card">
+                <div class="tabs">
+                    <button class="tab active" data-tab="login">
+                        <i class="fas fa-sign-in-alt"></i> Sign In
+                    </button>
+                    <button class="tab" data-tab="signup">
+                        <i class="fas fa-user-plus"></i> Sign Up
+                    </button>
+                </div>
+                
+                <!-- Login Form -->
+                <div id="tab-login" class="tab-content active">
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label for="username">Username</label>
+                            <div class="input-group">
+                                <i class="fas fa-user"></i>
+                                <input type="text" id="username" placeholder="Enter your username" required autofocus>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <div class="input-group">
+                                <i class="fas fa-lock"></i>
+                                <input type="password" id="password" placeholder="Enter your password" required>
+                                <button type="button" class="password-toggle" onclick="togglePassword('password')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="remember-forgot">
+                            <label class="remember-me">
+                                <input type="checkbox" id="rememberMe">
+                                <span>Remember me</span>
+                            </label>
+                            <a href="#" class="forgot-link">Forgot password?</a>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-full btn-lg">
+                            <i class="fas fa-sign-in-alt"></i> Sign In
+                        </button>
+                    </form>
+                    
+                    <div class="divider">
+                        <span>or continue with</span>
+                    </div>
+                    
+                    <div class="social-login">
+                        <button class="social-btn" onclick="alert('Google OAuth coming soon!')">
+                            <i class="fab fa-google"></i>
+                            Continue with Google
+                        </button>
+                        <button class="social-btn" onclick="alert('GitHub OAuth coming soon!')">
+                            <i class="fab fa-github"></i>
+                            Continue with GitHub
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Signup Form -->
+                <div id="tab-signup" class="tab-content">
+                    <form id="signupForm">
+                        <div class="form-group">
+                            <label for="signupUsername">Username</label>
+                            <div class="input-group">
+                                <i class="fas fa-user"></i>
+                                <input type="text" id="signupUsername" placeholder="Choose a username" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="signupEmail">Email</label>
+                            <div class="input-group">
+                                <i class="fas fa-envelope"></i>
+                                <input type="email" id="signupEmail" placeholder="Enter your email" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="signupPassword">Password</label>
+                            <div class="input-group">
+                                <i class="fas fa-lock"></i>
+                                <input type="password" id="signupPassword" placeholder="Create a password (min. 6 characters)" required>
+                                <button type="button" class="password-toggle" onclick="togglePassword('signupPassword')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="confirmPassword">Confirm Password</label>
+                            <div class="input-group">
+                                <i class="fas fa-lock"></i>
+                                <input type="password" id="confirmPassword" placeholder="Confirm your password" required>
+                                <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="terms-checkbox">
+                            <input type="checkbox" id="acceptTerms" required>
+                            <span>I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></span>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-full btn-lg">
+                            <i class="fas fa-user-plus"></i> Create Account
+                        </button>
+                    </form>
+                </div>
+                
+                <div class="auth-footer">
+                    <a href="/" class="back-link">
+                        <i class="fas fa-arrow-left"></i> Back to Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+                
+                // Focus first input
+                setTimeout(() => {
+                    const firstInput = document.querySelector('.tab-content.active input');
+                    if (firstInput) firstInput.focus();
+                }, 100);
+            });
+        });
+        
+        // Password toggle
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            const button = input.nextElementSibling;
+            const icon = button.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+        
+        // Show message
+        function showMessage(message, type) {
+            const existing = document.querySelector('.message');
+            if (existing) existing.remove();
+            
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message message-${type}`;
+            msgDiv.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                ${message}
+            `;
+            
+            const form = document.querySelector('.tab-content.active form');
+            form.insertBefore(msgDiv, form.firstChild);
+            
+            setTimeout(() => msgDiv.remove(), 5000);
+        }
+        
+        // Validate form
+        function validateForm(formData, isSignup = false) {
+            if (!formData.username || formData.username.length < 3) {
+                showMessage('Username must be at least 3 characters long', 'error');
+                return false;
+            }
+            
+            if (!formData.password || formData.password.length < 6) {
+                showMessage('Password must be at least 6 characters long', 'error');
+                return false;
+            }
+            
+            if (isSignup) {
+                if (!formData.email || !formData.email.includes('@')) {
+                    showMessage('Please enter a valid email address', 'error');
+                    return false;
+                }
+                
+                if (formData.password !== formData.confirmPassword) {
+                    showMessage('Passwords do not match', 'error');
+                    return false;
+                }
+                
+                if (!document.getElementById('acceptTerms').checked) {
+                    showMessage('Please accept the terms and conditions', 'error');
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+        
+        // Login
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                username: document.getElementById('username').value.trim(),
+                password: document.getElementById('password').value
+            };
+            
+            if (!validateForm(formData)) return;
+            
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalContent = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('✅ Successfully logged in! Redirecting...', 'success');
+                    setTimeout(() => window.location.href = '/', 1500);
+                } else {
+                    showMessage('❌ ' + (data.error || 'Invalid username or password'), 'error');
+                }
+            } catch (error) {
+                showMessage('❌ Network error. Please try again.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+            }
+        });
+        
+        // Signup
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                username: document.getElementById('signupUsername').value.trim(),
+                email: document.getElementById('signupEmail').value.trim(),
+                password: document.getElementById('signupPassword').value,
+                confirmPassword: document.getElementById('confirmPassword').value
+            };
+            
+            if (!validateForm(formData, true)) return;
+            
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalContent = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating account...';
+            
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: formData.username,
+                        email: formData.email,
+                        password: formData.password,
+                        acceptedTerms: true
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('✅ Account created successfully! Please sign in.', 'success');
+                    setTimeout(() => {
+                        document.querySelector('.tab[data-tab="login"]').click();
+                        document.getElementById('username').value = formData.username;
+                    }, 1500);
+                } else {
+                    showMessage('❌ ' + (data.error || 'Registration failed'), 'error');
+                }
+            } catch (error) {
+                showMessage('❌ Network error. Please try again.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,301 @@
+/* ================================
+   ULTIMATE GUITAR STYLE
+   Chords positioned above lyrics
+   ================================ */
+
+.ultimate-guitar-view {
+    background: white;
+    border-radius: var(--radius-md);
+    padding: 2rem;
+    font-family: 'Courier New', Courier, monospace;
+    line-height: 2.5;
+    font-size: 14px;
+    color: var(--gray-900);
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.ug-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid var(--gray-200);
+}
+
+.ug-song-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin: 0 0 0.5rem 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.ug-artist {
+    font-size: 1.125rem;
+    color: var(--gray-600);
+    margin: 0 0 1rem 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.ug-meta {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.875rem;
+}
+
+.ug-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--gray-600);
+}
+
+.ug-meta-item i {
+    color: var(--primary);
+}
+
+/* Chord Diagrams Section */
+.ug-chord-diagrams {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+    padding: 1.5rem;
+    background: var(--gray-50);
+    border-radius: var(--radius-md);
+    margin-bottom: 2rem;
+    justify-content: center;
+}
+
+.chord-diagram {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.chord-diagram-name {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--gray-900);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.chord-diagram-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 20px);
+    grid-template-rows: repeat(5, 20px);
+    gap: 0;
+    position: relative;
+    padding: 5px;
+}
+
+/* Chord diagram strings (vertical lines) */
+.chord-diagram-grid::before {
+    content: '';
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    right: 5px;
+    bottom: 5px;
+    background-image: 
+        repeating-linear-gradient(to right, 
+            var(--gray-400) 0px, 
+            var(--gray-400) 1px, 
+            transparent 1px, 
+            transparent 20px
+        ),
+        repeating-linear-gradient(to bottom, 
+            var(--gray-400) 0px, 
+            var(--gray-400) 2px, 
+            transparent 2px, 
+            transparent 20px
+        );
+    pointer-events: none;
+}
+
+.chord-diagram-dot {
+    width: 12px;
+    height: 12px;
+    background: var(--primary);
+    border-radius: 50%;
+    margin: auto;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Lyrics with Chords */
+.ug-lyrics {
+    white-space: pre-wrap;
+    position: relative;
+}
+
+.ug-line {
+    margin-bottom: 1.5rem;
+    position: relative;
+    min-height: 3em;
+}
+
+.ug-chords-row {
+    font-weight: 700;
+    color: var(--primary);
+    font-size: 15px;
+    line-height: 2;
+    white-space: pre;
+    user-select: none;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.ug-chords-row:hover {
+    color: var(--primary-dark);
+}
+
+.ug-lyrics-row {
+    color: var(--gray-900);
+    white-space: pre;
+    line-height: 2;
+}
+
+.ug-chord-inline {
+    color: var(--primary);
+    font-weight: 700;
+    cursor: pointer;
+    padding: 0 2px;
+    transition: all 0.2s;
+    display: inline-block;
+}
+
+.ug-chord-inline:hover {
+    background: var(--primary);
+    color: white;
+    border-radius: 4px;
+}
+
+/* Section Headers (Verse, Chorus, etc.) */
+.ug-section {
+    font-weight: 700;
+    color: var(--gray-700);
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    padding: 0.5rem 1rem;
+    background: var(--gray-100);
+    border-left: 4px solid var(--primary);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* View Toggle Buttons */
+.view-toggle {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    background: var(--gray-100);
+    padding: 0.5rem;
+    border-radius: var(--radius-md);
+    width: fit-content;
+}
+
+.view-toggle-btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    background: transparent;
+    color: var(--gray-600);
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.view-toggle-btn:hover {
+    background: var(--gray-200);
+    color: var(--gray-900);
+}
+
+.view-toggle-btn.active {
+    background: white;
+    color: var(--primary);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Playback Indicator */
+.ug-line.active {
+    background: rgba(91, 79, 255, 0.05);
+    border-left: 3px solid var(--primary);
+    padding-left: 1rem;
+    margin-left: -1rem;
+}
+
+.ug-chord-inline.active {
+    background: var(--primary);
+    color: white;
+    border-radius: 4px;
+    padding: 2px 4px;
+    animation: pulse 0.5s;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* Export/Print Styles */
+@media print {
+    .view-toggle,
+    .ug-meta {
+        display: none;
+    }
+    
+    .ultimate-guitar-view {
+        padding: 0;
+        max-width: 100%;
+    }
+    
+    .ug-chords-row {
+        color: #000;
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .ultimate-guitar-view {
+        padding: 1rem;
+        font-size: 12px;
+    }
+    
+    .ug-chord-diagrams {
+        gap: 1rem;
+        padding: 1rem;
+    }
+    
+    .chord-diagram-grid {
+        grid-template-columns: repeat(5, 16px);
+        grid-template-rows: repeat(5, 16px);
+    }
+}
+
+/* Capo Indicator */
+.ug-capo {
+    background: var(--warning);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    display: inline-block;
+    margin-bottom: 1rem;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Tuning Info */
+.ug-tuning {
+    color: var(--gray-600);
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+

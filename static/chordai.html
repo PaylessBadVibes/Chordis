@@ -1,0 +1,1396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChordAI - Interactive Player | Chordis</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/chordis-shared.css?v=2.0">
+    <style>
+        .chord-ai-layout {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: var(--space-8);
+            margin-bottom: var(--space-8);
+        }
+        
+        .page-header {
+            text-align: center;
+            margin-bottom: var(--space-10);
+        }
+        
+        .page-header h1 {
+            font-size: 3.5rem;
+            margin-bottom: var(--space-3);
+        }
+        
+        .page-header p {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+        }
+        
+        .current-chord-display {
+            text-align: center;
+            padding: var(--space-10) var(--space-6);
+            background: var(--gradient-primary);
+            border-radius: var(--radius-2xl);
+            margin-bottom: var(--space-8);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .current-chord-display::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .current-chord {
+            position: relative;
+            font-size: 8rem;
+            font-weight: 900;
+            color: white;
+            text-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            margin-bottom: var(--space-4);
+            min-height: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .chord-info {
+            position: relative;
+            color: rgba(255,255,255,0.95);
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        
+        .chords-section {
+            margin-bottom: var(--space-8);
+        }
+        
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            margin-bottom: var(--space-6);
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .section-title i {
+            color: var(--primary-500);
+        }
+        
+        .chords-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: var(--space-4);
+            padding: var(--space-8);
+            background: var(--bg-overlay);
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border-color);
+        }
+        
+        .chord-item {
+            padding: var(--space-6) var(--space-4);
+            background: rgba(124, 58, 237, 0.15);
+            border: 2px solid rgba(124, 58, 237, 0.3);
+            border-radius: var(--radius-lg);
+            font-weight: 700;
+            font-size: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition-base);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .chord-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .chord-item:hover::before {
+            left: 100%;
+        }
+        
+        .chord-item:hover {
+            transform: translateY(-4px) scale(1.05);
+            border-color: var(--primary-500);
+            background: rgba(124, 58, 237, 0.25);
+            box-shadow: 0 8px 24px rgba(124, 58, 237, 0.4);
+        }
+        
+        .chord-item.active {
+            background: var(--gradient-primary);
+            border-color: transparent;
+            transform: scale(1.1);
+            box-shadow: 0 12px 32px rgba(124, 58, 237, 0.6);
+            animation: pulse 2s infinite;
+        }
+        
+        .chord-item.active::after {
+            content: '♪';
+            position: absolute;
+            top: var(--space-2);
+            right: var(--space-2);
+            font-size: 1.25rem;
+            animation: bounce 1s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-8px); }
+            60% { transform: translateY(-4px); }
+        }
+        
+        .controls-panel {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: var(--space-4);
+            flex-wrap: wrap;
+            margin-top: var(--space-8);
+        }
+        
+        .play-button {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--gradient-primary);
+            border: none;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            transition: all var(--transition-base);
+            box-shadow: var(--shadow-button);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .play-button:hover {
+            transform: scale(1.1);
+            box-shadow: var(--shadow-button-hover);
+        }
+        
+        .play-button.playing {
+            background: var(--error);
+            animation: pulse 2s infinite;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: var(--space-12) var(--space-6);
+            color: var(--text-muted);
+        }
+        
+        .empty-state i {
+            font-size: 5rem;
+            margin-bottom: var(--space-6);
+            opacity: 0.4;
+            display: block;
+        }
+        
+        .empty-state h3 {
+            font-size: 1.75rem;
+            margin-bottom: var(--space-4);
+            color: var(--text-secondary);
+        }
+        
+        .empty-state p {
+            font-size: 1.125rem;
+            margin-bottom: var(--space-8);
+        }
+        
+        /* Chord Tuner Panel */
+        .tuner-panel {
+            background: var(--bg-overlay);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-2xl);
+            padding: var(--space-6);
+            position: sticky;
+            top: 100px;
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+        }
+        
+        .tuner-header {
+            margin-bottom: var(--space-6);
+        }
+        
+        .tuner-header h3 {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            margin-bottom: var(--space-2);
+        }
+        
+        .tuner-tabs {
+            display: flex;
+            gap: var(--space-2);
+            margin-bottom: var(--space-6);
+        }
+        
+        .tuner-tab {
+            flex: 1;
+            padding: var(--space-2) var(--space-3);
+            border-radius: var(--radius-md);
+            background: var(--bg-overlay);
+            border: 2px solid var(--border-color);
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: var(--transition-base);
+        }
+        
+        .tuner-tab.active {
+            background: var(--gradient-primary);
+            color: white;
+            border-color: transparent;
+        }
+        
+        .chord-diagram {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: var(--radius-lg);
+            padding: var(--space-6);
+            margin-bottom: var(--space-6);
+        }
+        
+        .chord-name-display {
+            text-align: center;
+            font-size: 3rem;
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: var(--space-6);
+        }
+        
+        .fretboard {
+            display: grid;
+            gap: 2px;
+            background: #333;
+            padding: var(--space-4);
+            border-radius: var(--radius-md);
+            position: relative;
+        }
+        
+        .string-row {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 2px;
+        }
+        
+        .fret {
+            aspect-ratio: 1;
+            background: #1a1a2e;
+            border: 1px solid #444;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all var(--transition-base);
+            position: relative;
+        }
+        
+        .fret:hover {
+            background: rgba(124, 58, 237, 0.3);
+        }
+        
+        .fret.active {
+            background: var(--gradient-primary);
+        }
+        
+        .fret.active::after {
+            content: '';
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+        
+        .string-labels {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 2px;
+            text-align: center;
+            margin-bottom: var(--space-2);
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+        
+        .fingering-info {
+            margin-top: var(--space-4);
+            padding: var(--space-4);
+            background: rgba(124, 58, 237, 0.1);
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+        
+        .play-chord-btn {
+            width: 100%;
+            padding: var(--space-4);
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-lg);
+            font-weight: 700;
+            font-size: 1.125rem;
+            cursor: pointer;
+            transition: all var(--transition-base);
+            margin-bottom: var(--space-4);
+        }
+        
+        .play-chord-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-button-hover);
+        }
+        
+        .tuner-strings {
+            display: grid;
+            gap: var(--space-3);
+        }
+        
+        .tuner-string {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-3);
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: var(--radius-md);
+        }
+        
+        .string-name {
+            font-weight: 700;
+            font-size: 1.5rem;
+            min-width: 40px;
+            color: var(--primary-500);
+        }
+        
+        .string-info {
+            flex: 1;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+        
+        .play-string-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--gradient-primary);
+            border: none;
+            color: white;
+            cursor: pointer;
+            transition: all var(--transition-base);
+        }
+        
+        .play-string-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .play-string-btn.playing {
+            animation: pulse 1s infinite;
+        }
+        
+        .chord-variations {
+            display: grid;
+            gap: var(--space-2);
+            margin-bottom: var(--space-6);
+        }
+        
+        .variation-btn {
+            padding: var(--space-3);
+            background: var(--bg-overlay);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-base);
+            text-align: left;
+        }
+        
+        .variation-btn.active {
+            background: rgba(124, 58, 237, 0.2);
+            border-color: var(--primary-500);
+            color: var(--text-primary);
+        }
+        
+        .variation-btn:hover {
+            border-color: var(--primary-500);
+        }
+        
+        @media (max-width: 1200px) {
+            .chord-ai-layout {
+                grid-template-columns: 1fr;
+            }
+            
+            .tuner-panel {
+                position: relative;
+                top: 0;
+                max-height: none;
+            }
+            
+            .page-header h1 {
+                font-size: 2.5rem;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .page-header h1 {
+                font-size: 2rem;
+            }
+            
+            .page-header p {
+                font-size: 1rem;
+            }
+            
+            .current-chord-display {
+                padding: var(--space-8) var(--space-4);
+            }
+            
+            .current-chord {
+                font-size: 4rem;
+                min-height: 80px;
+            }
+            
+            .chord-info {
+                font-size: 1rem;
+            }
+            
+            .chords-grid {
+                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+                gap: var(--space-3);
+                padding: var(--space-4);
+            }
+            
+            .chord-item {
+                padding: var(--space-3) var(--space-2);
+                font-size: 1.125rem;
+            }
+            
+            .controls-panel {
+                flex-direction: column;
+                gap: var(--space-3);
+            }
+            
+            .controls-panel .btn {
+                width: 100%;
+            }
+            
+            .play-button {
+                width: 72px;
+                height: 72px;
+                font-size: 1.75rem;
+            }
+            
+            /* Tuner panel mobile optimizations */
+            .tuner-panel {
+                padding: var(--space-5);
+            }
+            
+            .chord-name-display {
+                font-size: 2.5rem;
+            }
+            
+            .fretboard {
+                padding: var(--space-3);
+            }
+            
+            .fret {
+                min-height: 40px;
+            }
+            
+            .string-labels {
+                font-size: 0.8125rem;
+            }
+            
+            .tuner-string {
+                padding: var(--space-2);
+            }
+            
+            .string-name {
+                font-size: 1.25rem;
+                min-width: 32px;
+            }
+            
+            .string-info {
+                font-size: 0.8125rem;
+            }
+            
+            .play-string-btn {
+                width: 40px;
+                height: 40px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .page-header h1 {
+                font-size: 1.75rem;
+            }
+            
+            .current-chord {
+                font-size: 3rem;
+                min-height: 60px;
+            }
+            
+            .chord-info {
+                font-size: 0.875rem;
+            }
+            
+            .chords-grid {
+                grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+                gap: var(--space-2);
+                padding: var(--space-3);
+            }
+            
+            .chord-item {
+                padding: var(--space-2);
+                font-size: 1rem;
+            }
+            
+            .play-button {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+            
+            .tuner-panel {
+                padding: var(--space-4);
+            }
+            
+            .chord-name-display {
+                font-size: 2rem;
+            }
+            
+            .play-chord-btn {
+                font-size: 1rem;
+                padding: var(--space-3);
+            }
+            
+            .tuner-tabs {
+                gap: var(--space-1);
+            }
+            
+            .tuner-tab {
+                font-size: 0.8125rem;
+                padding: var(--space-2);
+            }
+            
+            .tuner-tab i {
+                font-size: 0.75rem;
+            }
+            
+            .variation-btn {
+                font-size: 0.875rem;
+                padding: var(--space-2);
+            }
+            
+            .fret.active::after {
+                width: 16px;
+                height: 16px;
+            }
+        }
+        
+        /* Tempo Control Styles */
+        .tempo-btn {
+            padding: var(--space-2) var(--space-4);
+            background: var(--bg-overlay);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.9375rem;
+            cursor: pointer;
+            transition: all var(--transition-base);
+            min-width: 60px;
+        }
+        
+        .tempo-btn.active {
+            background: var(--gradient-primary);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+        }
+        
+        .tempo-btn:hover:not(.active) {
+            border-color: var(--primary-500);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-content">
+            <a href="/" class="logo">
+                <i class="fas fa-music"></i> Chordis
+            </a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/#features">Features</a>
+                <a href="/chordai" class="active">ChordAI</a>
+                <a href="/realtime">Music Recognizer</a>
+                <a href="/library">Library</a>
+                <a href="/tutorials">Tutorials</a>
+                <a href="/analytics">Analytics</a>
+            </div>
+            <div class="auth-buttons">
+                <div id="auth-buttons">
+                    <button class="btn btn-secondary" onclick="window.location.href='/auth'">
+                        <i class="fas fa-user"></i> Sign In
+                    </button>
+                    <button class="btn btn-primary" onclick="window.location.href='/auth'">
+                        <i class="fas fa-rocket"></i> Get Started
+                    </button>
+                </div>
+                <div id="user-menu" class="user-menu">
+                    <span class="user-info">
+                        <i class="fas fa-user-circle"></i>
+                        <span id="username-display"></span>
+                    </span>
+                    <button class="btn btn-danger btn-sm" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="main">
+        <div class="container">
+            <div class="page-header">
+                <h1><i class="fas fa-guitar"></i> ChordAI Player</h1>
+                <p>Watch chords change in real-time as music plays</p>
+            </div>
+            
+            <div class="chord-ai-layout">
+                <!-- Main Player Area -->
+                <div class="player-area">
+                    <div class="current-chord-display">
+                        <div class="current-chord" id="currentChord">--</div>
+                        <div class="chord-info" id="chordInfo">No song loaded</div>
+                    </div>
+                    
+                    <div class="chords-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-music"></i>
+                            Chord Progression
+                        </h3>
+                        <div class="chords-grid" id="chords">
+                            <div class="empty-state">
+                                <i class="fas fa-music"></i>
+                                <h3>No Chords Available</h3>
+                                <p>Analyze a song first, then click "Open in ChordAI" to see interactive chord visualization here</p>
+                                <button class="btn btn-primary btn-lg" onclick="window.location.href='/'">
+                                    <i class="fas fa-search"></i> Analyze Songs
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Lyrics Section -->
+                    <div class="chords-section" style="margin-top: var(--space-8);">
+                        <h3 class="section-title">
+                            <i class="fas fa-align-left"></i>
+                            Lyrics
+                        </h3>
+                        <div id="lyrics-display" style="padding: var(--space-6); background: rgba(0,0,0,0.2); border-radius: var(--radius-lg); min-height: 200px; max-height: 400px; overflow-y: auto; line-height: 1.8; color: var(--text-secondary);">
+                            <p style="text-align: center; opacity: 0.5;">No lyrics available</p>
+                        </div>
+                    </div>
+                    
+                    <div class="controls-panel">
+                        <button class="btn btn-secondary" onclick="window.location.href='/'">
+                            <i class="fas fa-arrow-left"></i> Back to Analysis
+                        </button>
+                        <button class="play-button" id="playBtn" onclick="togglePlay()">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <button class="btn btn-success" onclick="saveToLibrary()">
+                            <i class="fas fa-save"></i> Save to Library
+                        </button>
+                    </div>
+                    
+                    <!-- Tempo Control -->
+                    <div class="tempo-control" style="display: flex; align-items: center; gap: var(--space-3); justify-content: center; margin-top: var(--space-6); flex-wrap: wrap;">
+                        <span style="color: var(--text-secondary); font-weight: 600; font-size: 0.9375rem;">
+                            <i class="fas fa-tachometer-alt"></i> Playback Speed:
+                        </span>
+                        <button class="tempo-btn" onclick="setPlaybackRate(0.5)">0.5x</button>
+                        <button class="tempo-btn" onclick="setPlaybackRate(0.75)">0.75x</button>
+                        <button class="tempo-btn active" onclick="setPlaybackRate(1.0)">1.0x</button>
+                        <button class="tempo-btn" onclick="setPlaybackRate(1.25)">1.25x</button>
+                        <button class="tempo-btn" onclick="setPlaybackRate(1.5)">1.5x</button>
+                        <button class="tempo-btn" onclick="setPlaybackRate(2.0)">2.0x</button>
+                    </div>
+                </div>
+                
+                <!-- Chord Tuner/Editor Panel -->
+                <div class="tuner-panel">
+                    <div class="tuner-header">
+                        <h3><i class="fas fa-sliders"></i> Chord Tools</h3>
+                        <p style="font-size: 0.875rem; color: var(--text-muted); margin: 0;">Learn, tune, and practice chords</p>
+                    </div>
+                    
+                    <div class="tuner-tabs">
+                        <button class="tuner-tab active" onclick="switchTunerTab('diagram')">
+                            <i class="fas fa-guitar"></i> Diagram
+                        </button>
+                        <button class="tuner-tab" onclick="switchTunerTab('tuner')">
+                            <i class="fas fa-sliders"></i> Tuner
+                        </button>
+                    </div>
+                    
+                    <!-- Chord Diagram Tab -->
+                    <div id="diagram-tab" class="tuner-tab-content">
+                        <div class="chord-name-display" id="selectedChordName">C</div>
+                        
+                        <button class="play-chord-btn" onclick="playCurrentChord()">
+                            <i class="fas fa-volume-up"></i> Play Chord Sound
+                        </button>
+                        
+                        <div class="chord-diagram">
+                            <div class="string-labels">
+                                <div>E</div>
+                                <div>A</div>
+                                <div>D</div>
+                                <div>G</div>
+                                <div>B</div>
+                                <div>e</div>
+                            </div>
+                            <div class="fretboard" id="fretboard">
+                                <!-- Frets will be generated by JavaScript -->
+                            </div>
+                            <div class="fingering-info" id="fingeringInfo">
+                                <strong>Fingering:</strong> Click on frets to create custom chord positions
+                            </div>
+                        </div>
+                        
+                        <div class="chord-variations">
+                            <h4 style="font-size: 1rem; margin-bottom: var(--space-3); color: var(--text-secondary);">
+                                <i class="fas fa-lightbulb"></i> Common Variations
+                            </h4>
+                            <button class="variation-btn active" onclick="loadChordVariation('C', 'basic')">
+                                C Major (Basic)
+                            </button>
+                            <button class="variation-btn" onclick="loadChordVariation('C', 'barre')">
+                                C Major (Barre - 3rd fret)
+                            </button>
+                            <button class="variation-btn" onclick="loadChordVariation('C', 'advanced')">
+                                C Major (Advanced - 8th fret)
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Guitar Tuner Tab -->
+                    <div id="tuner-tab" class="tuner-tab-content" style="display: none;">
+                        <h4 style="margin-bottom: var(--space-4); text-align: center; color: var(--text-secondary);">
+                            Standard Tuning (E A D G B e)
+                        </h4>
+                        
+                        <div class="tuner-strings">
+                            <div class="tuner-string">
+                                <div class="string-name">E</div>
+                                <div class="string-info">
+                                    <div>6th String (Low E)</div>
+                                    <div style="font-size: 0.75rem;">82.41 Hz</div>
+                                </div>
+                                <button class="play-string-btn" onclick="playString(0, this)">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                            </div>
+                            
+                            <div class="tuner-string">
+                                <div class="string-name">A</div>
+                                <div class="string-info">
+                                    <div>5th String</div>
+                                    <div style="font-size: 0.75rem;">110.00 Hz</div>
+                                </div>
+                                <button class="play-string-btn" onclick="playString(1, this)">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                            </div>
+                            
+                            <div class="tuner-string">
+                                <div class="string-name">D</div>
+                                <div class="string-info">
+                                    <div>4th String</div>
+                                    <div style="font-size: 0.75rem;">146.83 Hz</div>
+                                </div>
+                                <button class="play-string-btn" onclick="playString(2, this)">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                            </div>
+                            
+                            <div class="tuner-string">
+                                <div class="string-name">G</div>
+                                <div class="string-info">
+                                    <div>3rd String</div>
+                                    <div style="font-size: 0.75rem;">196.00 Hz</div>
+                                </div>
+                                <button class="play-string-btn" onclick="playString(3, this)">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                            </div>
+                            
+                            <div class="tuner-string">
+                                <div class="string-name">B</div>
+                                <div class="string-info">
+                                    <div>2nd String</div>
+                                    <div style="font-size: 0.75rem;">246.94 Hz</div>
+                                </div>
+                                <button class="play-string-btn" onclick="playString(4, this)">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                            </div>
+                            
+                            <div class="tuner-string">
+                                <div class="string-name">e</div>
+                                <div class="string-info">
+                                    <div>1st String (High E)</div>
+                                    <div style="font-size: 0.75rem;">329.63 Hz</div>
+                                </div>
+                                <button class="play-string-btn" onclick="playString(5, this)">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: var(--space-6); padding: var(--space-4); background: rgba(59, 130, 246, 0.1); border-radius: var(--radius-md); font-size: 0.875rem; color: var(--text-secondary);">
+                            <i class="fas fa-lightbulb"></i> <strong>Tip:</strong> Click the play button to hear the reference pitch for each string. Tune your guitar to match these sounds!
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Hidden audio player -->
+    <audio id="audioPlayer" style="display: none;"></audio>
+    
+    <script>
+        let isPlaying = false;
+        let currentChordIndex = 0;
+        let chordData = [];
+        let playInterval = null;
+        let audioPlayer = null;
+        let currentSongData = null;
+        
+        // Check auth
+        async function checkAuth() {
+            try {
+                const response = await fetch('/api/current-user', { credentials: 'include' });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.user) {
+                        document.getElementById('auth-buttons').style.display = 'none';
+                        document.getElementById('user-menu').style.display = 'flex';
+                        document.getElementById('username-display').textContent = data.user.username;
+                    }
+                }
+            } catch (error) {
+                console.log('Not logged in');
+            }
+        }
+        
+        async function logout() {
+            await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+            document.getElementById('auth-buttons').style.display = 'flex';
+            document.getElementById('user-menu').style.display = 'none';
+            window.location.reload();
+        }
+        
+        // Load chord data
+        async function loadChordData() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const songId = urlParams.get('song');
+            
+            // Try to load from localStorage first (set by library page)
+            const savedSong = localStorage.getItem('currentSong');
+            if (savedSong) {
+                try {
+                    const data = JSON.parse(savedSong);
+                    console.log('Loading song from localStorage:', data);
+                    
+                    // Extract chords and lyrics
+                    const chordDataObj = typeof data.chord_data === 'string' ? JSON.parse(data.chord_data) : data.chord_data;
+                    const lyricsDataObj = typeof data.lyrics_data === 'string' ? JSON.parse(data.lyrics_data) : data.lyrics_data;
+                    
+                    console.log('Chord data:', chordDataObj);
+                    console.log('Lyrics data:', lyricsDataObj);
+                    
+                    // Store song data globally
+                    currentSongData = data;
+                    
+                    // Extract chord names
+                    let chordNames = [];
+                    if (chordDataObj && chordDataObj.chords) {
+                        chordNames = chordDataObj.chords.map(c => {
+                            if (typeof c === 'string') return c;
+                            if (c.chord) return c.chord;
+                            if (c.name) return c.name;
+                            return 'C';
+                        });
+                    }
+                    
+                    console.log('Extracted chords:', chordNames);
+                    
+                    displayChords(chordNames);
+                    
+                    // Extract title and artist
+                    const titleParts = data.title.split(' - ');
+                    const title = titleParts[0] || data.title;
+                    const artist = titleParts[1] || 'Unknown Artist';
+                    
+                    updateChordInfo(title, artist);
+                    
+                    // Display lyrics if available
+                    if (lyricsDataObj) {
+                        if (lyricsDataObj.lyrics) {
+                            console.log('Displaying lyrics from lyrics array');
+                            displayLyrics(lyricsDataObj.lyrics);
+                        } else if (lyricsDataObj.text) {
+                            console.log('Displaying lyrics from text');
+                            displayLyrics(lyricsDataObj.text);
+                        } else {
+                            console.log('No lyrics data found');
+                        }
+                    } else {
+                        console.log('No lyrics data object');
+                    }
+                    
+                    // Load audio if source URL available
+                    if (data.source_url && data.source_url.length > 0) {
+                        audioPlayer = document.getElementById('audioPlayer');
+                        audioPlayer.src = data.source_url;
+                        audioPlayer.load();
+                        console.log('Audio loaded and ready:', data.source_url);
+                    } else {
+                        console.log('No audio URL available for this song');
+                    }
+                    
+                    // Clear localStorage after loading
+                    localStorage.removeItem('currentSong');
+                    return;
+                } catch (error) {
+                    console.error('Error parsing saved song:', error);
+                }
+            }
+            
+            // Fallback to API if songId provided
+            if (songId) {
+                try {
+                    const response = await fetch(`/api/saved-analysis/${songId}`, { credentials: 'include' });
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.success && data.analysis) {
+                            // Process same as localStorage
+                            const chordData = typeof data.analysis.chord_data === 'string' ? JSON.parse(data.analysis.chord_data) : data.analysis.chord_data;
+                            const chordNames = chordData.chords ? chordData.chords.map(c => (typeof c === 'string' ? c : (c.chord || c.name || 'C'))) : [];
+                            displayChords(chordNames);
+                            
+                            const titleParts = data.analysis.title.split(' - ');
+                            updateChordInfo(titleParts[0], titleParts[1] || 'Unknown');
+                            
+                            // Load lyrics
+                            const lyricsData = typeof data.analysis.lyrics_data === 'string' ? JSON.parse(data.analysis.lyrics_data) : data.analysis.lyrics_data;
+                            if (lyricsData && lyricsData.lyrics) {
+                                displayLyrics(lyricsData.lyrics);
+                            }
+                            
+                            // Load audio
+                            if (data.analysis.source_url) {
+                                audioPlayer = document.getElementById('audioPlayer');
+                                audioPlayer.src = data.analysis.source_url;
+                                audioPlayer.load();
+                                console.log('Audio loaded from API');
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error loading from API:', error);
+                    loadDemoChords();
+                }
+            } else {
+                // No data available - load demo
+                loadDemoChords();
+            }
+        }
+        
+        function displayLyrics(lyricsData) {
+            const lyricsContainer = document.getElementById('lyrics-display');
+            if (!lyricsContainer) return;
+            
+            console.log('Displaying lyrics:', lyricsData);
+            
+            let lyricsHTML = '';
+            
+            if (Array.isArray(lyricsData) && lyricsData.length > 0) {
+                lyricsHTML = lyricsData.map(l => {
+                    const text = l.text || l;
+                    return `<div style="margin-bottom: 0.5rem;">${text}</div>`;
+                }).join('');
+            } else if (typeof lyricsData === 'string') {
+                lyricsHTML = lyricsData.split('\n').map(line => 
+                    `<div style="margin-bottom: 0.5rem;">${line}</div>`
+                ).join('');
+            } else {
+                lyricsHTML = '<p style="text-align: center; opacity: 0.5;">No lyrics available for this song</p>';
+            }
+            
+            lyricsContainer.innerHTML = lyricsHTML;
+        }
+        
+        function loadDemoChords() {
+            setTimeout(() => {
+                const demoChords = ['C', 'Am', 'F', 'G', 'Em', 'Dm'];
+                displayChords(demoChords);
+                updateChordInfo('Demo Song', 'Demo Artist');
+            }, 500);
+        }
+        
+        function displayChords(chords) {
+            chordData = chords;
+            const chordsGrid = document.getElementById('chords');
+            
+            if (chords && chords.length > 0) {
+                chordsGrid.innerHTML = chords.map((chord, index) => {
+                    const chordName = typeof chord === 'string' ? chord : (chord.name || chord.chord);
+                    return `<div class="chord-item" data-index="${index}" onclick="selectChord(${index})">${chordName}</div>`;
+                }).join('');
+            }
+        }
+        
+        function updateChordInfo(title, artist) {
+            document.getElementById('chordInfo').textContent = `${title} - ${artist}`;
+        }
+        
+        function selectChord(index) {
+            document.querySelectorAll('.chord-item').forEach(item => item.classList.remove('active'));
+            
+            const chordItems = document.querySelectorAll('.chord-item');
+            if (chordItems[index]) {
+                chordItems[index].classList.add('active');
+                chordItems[index].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+            
+            if (chordData[index]) {
+                const chordName = typeof chordData[index] === 'string' ? chordData[index] : (chordData[index].name || chordData[index].chord);
+                document.getElementById('currentChord').textContent = chordName;
+                currentChordIndex = index;
+            }
+        }
+        
+        function togglePlay() {
+            const playBtn = document.getElementById('playBtn');
+            const playIcon = playBtn.querySelector('i');
+            const audioElement = document.getElementById('audioPlayer');
+            
+            if (!isPlaying) {
+                if (chordData.length === 0) {
+                    alert('No chords available to play. Please load a song first.');
+                    return;
+                }
+                
+                isPlaying = true;
+                playIcon.classList.remove('fa-play');
+                playIcon.classList.add('fa-pause');
+                playBtn.classList.add('playing');
+                
+                // Play audio if available
+                if (audioElement && audioElement.src) {
+                    audioElement.play().catch(err => {
+                        console.log('Audio play failed:', err);
+                    });
+                }
+                
+                // Auto-cycle chords
+                playInterval = setInterval(() => {
+                    selectChord(currentChordIndex);
+                    currentChordIndex = (currentChordIndex + 1) % chordData.length;
+                }, 2000);
+            } else {
+                isPlaying = false;
+                playIcon.classList.remove('fa-pause');
+                playIcon.classList.add('fa-play');
+                playBtn.classList.remove('playing');
+                clearInterval(playInterval);
+                
+                // Pause audio if playing
+                if (audioElement && audioElement.src) {
+                    audioElement.pause();
+                }
+            }
+        }
+        
+        function saveToLibrary() {
+            alert('Save to Library feature coming soon! Sign in to save your analyses.');
+        }
+        
+        // Chord diagram and tuner functionality
+        const chordLibrary = {
+            'C': { basic: [[0,3,2,0,1,0]], barre: [[8,10,10,9,8,8]], advanced: [[8,10,10,9,8,8]] },
+            'Am': { basic: [[0,0,2,2,1,0]] },
+            'F': { basic: [[1,3,3,2,1,1]] },
+            'G': { basic: [[3,2,0,0,0,3]] },
+            'Em': { basic: [[0,2,2,0,0,0]] },
+            'Dm': { basic: [[0,0,0,2,3,1]] },
+            'D': { basic: [[0,0,0,2,3,2]] },
+            'A': { basic: [[0,0,2,2,2,0]] },
+            'E': { basic: [[0,2,2,1,0,0]] }
+        };
+        
+        let currentSelectedChord = 'C';
+        let audioContext = null;
+        
+        // Initialize audio context on first user interaction
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            return audioContext;
+        }
+        
+        // Generate fretboard
+        function generateFretboard() {
+            const fretboard = document.getElementById('fretboard');
+            fretboard.innerHTML = '';
+            
+            // Generate 5 frets (rows) x 6 strings (columns)
+            for (let fret = 0; fret < 5; fret++) {
+                const row = document.createElement('div');
+                row.className = 'string-row';
+                
+                for (let string = 0; string < 6; string++) {
+                    const fretDiv = document.createElement('div');
+                    fretDiv.className = 'fret';
+                    fretDiv.dataset.fret = fret;
+                    fretDiv.dataset.string = string;
+                    fretDiv.onclick = () => toggleFret(fret, string);
+                    row.appendChild(fretDiv);
+                }
+                
+                fretboard.appendChild(row);
+            }
+            
+            // Load default chord (C)
+            loadChordDiagram('C', 'basic');
+        }
+        
+        function toggleFret(fret, string) {
+            const fretDiv = document.querySelector(`[data-fret="${fret}"][data-string="${string}"]`);
+            
+            // Clear all active frets in this string column
+            document.querySelectorAll(`[data-string="${string}"]`).forEach(f => f.classList.remove('active'));
+            
+            // Activate clicked fret
+            fretDiv.classList.add('active');
+            
+            // Play the note
+            playNote(string, fret);
+        }
+        
+        function loadChordDiagram(chordName, variation = 'basic') {
+            currentSelectedChord = chordName;
+            document.getElementById('selectedChordName').textContent = chordName;
+            
+            // Clear all active frets
+            document.querySelectorAll('.fret').forEach(f => f.classList.remove('active'));
+            
+            // Get chord fingering
+            const chord = chordLibrary[chordName];
+            if (chord && chord[variation]) {
+                const fingering = chord[variation][0];
+                
+                // Set active frets
+                fingering.forEach((fret, string) => {
+                    if (fret > 0) {
+                        const fretDiv = document.querySelector(`[data-fret="${fret-1}"][data-string="${string}"]`);
+                        if (fretDiv) fretDiv.classList.add('active');
+                    }
+                });
+                
+                // Update fingering info
+                document.getElementById('fingeringInfo').innerHTML = 
+                    `<strong>Fingering:</strong> ${fingering.map((f, i) => `${['E','A','D','G','B','e'][i]}:${f}`).join(' | ')}`;
+            }
+        }
+        
+        function loadChordVariation(chord, variation) {
+            // Update active variation button
+            document.querySelectorAll('.variation-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Load chord diagram
+            loadChordDiagram(chord, variation);
+        }
+        
+        function switchTunerTab(tab) {
+            // Update tab buttons
+            document.querySelectorAll('.tuner-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Show/hide content
+            document.getElementById('diagram-tab').style.display = tab === 'diagram' ? 'block' : 'none';
+            document.getElementById('tuner-tab').style.display = tab === 'tuner' ? 'block' : 'none';
+        }
+        
+        // Play note using Web Audio API
+        function playNote(string, fret) {
+            const ctx = initAudio();
+            
+            // Standard tuning frequencies (in Hz)
+            const openStrings = [82.41, 110.00, 146.83, 196.00, 246.94, 329.63];
+            const baseFreq = openStrings[string];
+            
+            // Calculate frequency based on fret (each fret is a semitone)
+            const frequency = baseFreq * Math.pow(2, fret / 12);
+            
+            // Create oscillator for the note
+            const oscillator = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(ctx.destination);
+            
+            oscillator.frequency.value = frequency;
+            oscillator.type = 'sine';
+            
+            // Envelope (fade in and out)
+            gainNode.gain.setValueAtTime(0, ctx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1.5);
+            
+            oscillator.start(ctx.currentTime);
+            oscillator.stop(ctx.currentTime + 1.5);
+        }
+        
+        function playCurrentChord() {
+            const ctx = initAudio();
+            const chord = chordLibrary[currentSelectedChord];
+            
+            if (chord && chord.basic) {
+                const fingering = chord.basic[0];
+                
+                // Play all strings with their fret positions
+                fingering.forEach((fret, string) => {
+                    if (fret >= 0) {
+                        setTimeout(() => playNote(string, fret), string * 50);
+                    }
+                });
+            }
+        }
+        
+        function playString(stringIndex, button) {
+            const ctx = initAudio();
+            const frequencies = [82.41, 110.00, 146.83, 196.00, 246.94, 329.63];
+            
+            // Visual feedback
+            const icon = button.querySelector('i');
+            icon.classList.remove('fa-play');
+            icon.classList.add('fa-volume-up');
+            button.classList.add('playing');
+            
+            // Play the string
+            const oscillator = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(ctx.destination);
+            
+            oscillator.frequency.value = frequencies[stringIndex];
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0, ctx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.4, ctx.currentTime + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 2);
+            
+            oscillator.start(ctx.currentTime);
+            oscillator.stop(ctx.currentTime + 2);
+            
+            // Reset button after playing
+            setTimeout(() => {
+                icon.classList.remove('fa-volume-up');
+                icon.classList.add('fa-play');
+                button.classList.remove('playing');
+            }, 2000);
+        }
+        
+        // Update chord diagram when chord is selected
+        function selectChord(index) {
+            document.querySelectorAll('.chord-item').forEach(item => item.classList.remove('active'));
+            
+            const chordItems = document.querySelectorAll('.chord-item');
+            if (chordItems[index]) {
+                chordItems[index].classList.add('active');
+                chordItems[index].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+            
+            if (chordData[index]) {
+                const chordName = typeof chordData[index] === 'string' ? chordData[index] : (chordData[index].name || chordData[index].chord);
+                document.getElementById('currentChord').textContent = chordName;
+                currentChordIndex = index;
+                
+                // Update chord diagram
+                const baseChord = chordName.replace(/[0-9m7sus]/g, '').trim();
+                if (chordLibrary[baseChord]) {
+                    loadChordDiagram(baseChord, 'basic');
+                }
+            }
+        }
+        
+        // Tempo/Playback Rate Control
+        function setPlaybackRate(rate) {
+            const audioElement = document.getElementById('audioPlayer');
+            if (audioElement && audioElement.src) {
+                audioElement.playbackRate = rate;
+                console.log('Playback rate set to:', rate);
+            }
+            
+            // Update active button
+            document.querySelectorAll('.tempo-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('ChordAI page loaded');
+            console.log('URL params:', window.location.search);
+            console.log('LocalStorage currentSong:', localStorage.getItem('currentSong'));
+            
+            // Initialize audio player
+            audioPlayer = document.getElementById('audioPlayer');
+            console.log('Audio player initialized:', audioPlayer);
+            
+            checkAuth();
+            loadChordData();
+            generateFretboard();
+        });
+    </script>
+</body>
+</html>

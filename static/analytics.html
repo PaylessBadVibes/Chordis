@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics | Chordis</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/chordis-shared.css?v=2.0">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        .page-header {
+            text-align: center;
+            margin-bottom: var(--space-10);
+        }
+        
+        .page-header h1 {
+            font-size: 3.5rem;
+            margin-bottom: var(--space-3);
+        }
+        
+        .page-header p {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--space-6);
+            margin-bottom: var(--space-10);
+        }
+        
+        .stat-card {
+            background: var(--bg-overlay);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            text-align: center;
+            transition: all var(--transition-base);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--gradient-primary);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--border-color-hover);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: block;
+            margin-bottom: var(--space-2);
+        }
+        
+        .stat-label {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+        
+        .time-filters {
+            display: flex;
+            justify-content: center;
+            gap: var(--space-3);
+            margin-bottom: var(--space-8);
+            flex-wrap: wrap;
+        }
+        
+        .time-btn {
+            padding: var(--space-3) var(--space-5);
+            border-radius: var(--radius-lg);
+            border: 2px solid var(--border-color);
+            background: var(--bg-overlay);
+            color: var(--text-secondary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-base);
+        }
+        
+        .time-btn.active {
+            background: var(--gradient-primary);
+            color: white;
+            border-color: transparent;
+            box-shadow: var(--shadow-button);
+        }
+        
+        .time-btn:hover:not(.active) {
+            border-color: var(--primary-500);
+        }
+        
+        .chart-section {
+            background: var(--bg-overlay);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            margin-bottom: var(--space-8);
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: var(--space-6);
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+        
+        .section-title i {
+            color: var(--primary-500);
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: var(--space-4);
+        }
+        
+        .top-lists-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--space-6);
+            margin-bottom: var(--space-8);
+        }
+        
+        .top-list {
+            background: var(--bg-overlay);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+        }
+        
+        .top-list ol {
+            list-style: none;
+            counter-reset: item;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .top-list li {
+            counter-increment: item;
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-4);
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-3);
+            transition: all var(--transition-base);
+        }
+        
+        .top-list li:hover {
+            background: rgba(124, 58, 237, 0.2);
+            transform: translateX(4px);
+        }
+        
+        .top-list li::before {
+            content: counter(item);
+            background: var(--gradient-primary);
+            color: white;
+            font-weight: 700;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .list-item-content {
+            flex: 1;
+        }
+        
+        .list-item-title {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .list-item-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+        
+        .list-item-count {
+            font-weight: 700;
+            color: var(--primary-500);
+            font-size: 1.125rem;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: var(--space-8);
+            color: var(--text-muted);
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            opacity: 0.3;
+            margin-bottom: var(--space-4);
+            display: block;
+        }
+        
+        @media (max-width: 768px) {
+            .page-header h1 {
+                font-size: 2.25rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-container {
+                height: 250px;
+            }
+            
+            .top-lists-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .page-header h1 {
+                font-size: 1.875rem;
+            }
+            
+            .stat-number {
+                font-size: 2.5rem;
+            }
+            
+            .time-btn {
+                flex: 1;
+                font-size: 0.875rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-content">
+            <a href="/" class="logo">
+                <i class="fas fa-music"></i> Chordis
+            </a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/#features">Features</a>
+                <a href="/chordai">ChordAI</a>
+                <a href="/realtime">Music Recognizer</a>
+                <a href="/library">Library</a>
+                <a href="/tutorials">Tutorials</a>
+                <a href="/analytics" class="active">Analytics</a>
+            </div>
+            <div class="auth-buttons">
+                <div id="auth-buttons">
+                    <button class="btn btn-secondary" onclick="window.location.href='/auth'">
+                        <i class="fas fa-user"></i> Sign In
+                    </button>
+                    <button class="btn btn-primary" onclick="window.location.href='/auth'">
+                        <i class="fas fa-rocket"></i> Get Started
+                    </button>
+                </div>
+                <div id="user-menu" class="user-menu">
+                    <span class="user-info">
+                        <i class="fas fa-user-circle"></i>
+                        <span id="username-display"></span>
+                    </span>
+                    <button class="btn btn-danger btn-sm" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="main">
+        <div class="container">
+            <div class="page-header">
+                <h1><i class="fas fa-chart-line"></i> Chordis Analytics</h1>
+                <p>Discover popular music trends and insights</p>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalSearches">0</div>
+                    <div class="stat-label">Total Searches</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalRecognitions">0</div>
+                    <div class="stat-label">Songs Recognized</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalAnalyses">0</div>
+                    <div class="stat-label">Analyses Performed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="topSongDisplay">—</div>
+                    <div class="stat-label">Most Popular Song</div>
+                </div>
+            </div>
+            
+            <div class="time-filters">
+                <button class="time-btn" onclick="loadAnalytics(7)">7 Days</button>
+                <button class="time-btn active" onclick="loadAnalytics(30)">30 Days</button>
+                <button class="time-btn" onclick="loadAnalytics(90)">90 Days</button>
+                <button class="time-btn" onclick="loadAnalytics(365)">All Time</button>
+            </div>
+            
+            <div class="chart-section">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-area"></i>
+                    Activity Timeline
+                </h2>
+                <div class="chart-container">
+                    <canvas id="activityChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="top-lists-grid">
+                <div class="top-list">
+                    <h3 class="section-title">
+                        <i class="fas fa-search"></i>
+                        Most Searched Songs
+                    </h3>
+                    <ol id="topSearchesList">
+                        <li class="empty-state">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Loading...</p>
+                        </li>
+                    </ol>
+                </div>
+                
+                <div class="top-list">
+                    <h3 class="section-title">
+                        <i class="fas fa-music"></i>
+                        Most Recognized Songs
+                    </h3>
+                    <ol id="topSongsList">
+                        <li class="empty-state">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Loading...</p>
+                        </li>
+                    </ol>
+                </div>
+                
+                <div class="top-list">
+                    <h3 class="section-title">
+                        <i class="fas fa-align-left"></i>
+                        Most Searched Lyrics
+                    </h3>
+                    <ol id="topLyricsList">
+                        <li class="empty-state">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Loading...</p>
+                        </li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let activityChart = null;
+        
+        // Auth check
+        async function checkAuth() {
+            try {
+                const response = await fetch('/api/current-user', { credentials: 'include' });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.user) {
+                        document.getElementById('auth-buttons').style.display = 'none';
+                        document.getElementById('user-menu').style.display = 'flex';
+                        document.getElementById('username-display').textContent = data.user.username;
+                    }
+                }
+            } catch (error) {
+                console.log('Not logged in');
+            }
+        }
+        
+        async function logout() {
+            await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+            document.getElementById('auth-buttons').style.display = 'flex';
+            document.getElementById('user-menu').style.display = 'none';
+            window.location.reload();
+        }
+        
+        // Load analytics data
+        async function loadAnalytics(days = 30) {
+            // Update active button
+            document.querySelectorAll('.time-btn').forEach(btn => btn.classList.remove('active'));
+            event?.target?.classList.add('active');
+            
+            try {
+                // Load stats
+                const statsResponse = await fetch(`/api/analytics/stats?days=${days}`);
+                const statsData = await statsResponse.json();
+                
+                if (statsData.success) {
+                    updateStatsCards(statsData.stats);
+                }
+                
+                // Load timeline
+                const timelineResponse = await fetch(`/api/analytics/activity-timeline?days=${days}`);
+                const timelineData = await timelineResponse.json();
+                
+                if (timelineData.success) {
+                    createActivityChart(timelineData.timeline);
+                }
+                
+                // Load top searches
+                const searchesResponse = await fetch(`/api/analytics/popular-searches?days=${days}&limit=10`);
+                const searchesData = await searchesResponse.json();
+                
+                // Load top songs
+                const songsResponse = await fetch(`/api/analytics/popular-songs?days=${days}&limit=10`);
+                const songsData = await songsResponse.json();
+                
+                // Load top lyrics
+                const lyricsResponse = await fetch(`/api/analytics/popular-lyrics?days=${days}&limit=10`);
+                const lyricsData = await lyricsResponse.json();
+                
+                displayTopLists(
+                    searchesData.success ? searchesData.searches : [],
+                    songsData.success ? songsData.songs : [],
+                    lyricsData.success ? lyricsData.lyrics : []
+                );
+                
+            } catch (error) {
+                console.error('Error loading analytics:', error);
+            }
+        }
+        
+        function updateStatsCards(stats) {
+            animateNumber('totalSearches', stats.total_searches || 0);
+            animateNumber('totalRecognitions', stats.total_recognitions || 0);
+            animateNumber('totalAnalyses', stats.total_analyses || 0);
+            
+            if (stats.top_song) {
+                document.getElementById('topSongDisplay').textContent = stats.top_song.title;
+                document.getElementById('topSongDisplay').title = `${stats.top_song.title} by ${stats.top_song.artist}`;
+            } else {
+                document.getElementById('topSongDisplay').textContent = '—';
+            }
+        }
+        
+        function animateNumber(elementId, targetValue) {
+            const element = document.getElementById(elementId);
+            const duration = 1000;
+            const steps = 30;
+            const increment = targetValue / steps;
+            let current = 0;
+            
+            const interval = setInterval(() => {
+                current += increment;
+                if (current >= targetValue) {
+                    current = targetValue;
+                    clearInterval(interval);
+                }
+                element.textContent = Math.floor(current);
+            }, duration / steps);
+        }
+        
+        function createActivityChart(timeline) {
+            const ctx = document.getElementById('activityChart').getContext('2d');
+            
+            // Destroy existing chart
+            if (activityChart) {
+                activityChart.destroy();
+            }
+            
+            // Prepare data
+            const dates = timeline.searches.map(s => s.date);
+            const searchCounts = timeline.searches.map(s => s.count);
+            const recognitionCounts = timeline.recognitions.map(r => r.count);
+            const analysisCounts = timeline.analyses.map(a => a.count);
+            
+            activityChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [
+                        {
+                            label: 'Searches',
+                            data: searchCounts,
+                            borderColor: 'rgb(124, 58, 237)',
+                            backgroundColor: 'rgba(124, 58, 237, 0.1)',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Recognitions',
+                            data: recognitionCounts,
+                            borderColor: 'rgb(236, 72, 153)',
+                            backgroundColor: 'rgba(236, 72, 153, 0.1)',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Analyses',
+                            data: analysisCounts,
+                            borderColor: 'rgb(16, 185, 129)',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: 'rgba(255, 255, 255, 0.8)',
+                                font: {
+                                    family: 'Poppins',
+                                    size: 12
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                color: 'rgba(255, 255, 255, 0.6)'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                color: 'rgba(255, 255, 255, 0.6)'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function displayTopLists(searches, songs, lyrics) {
+            // Top searches
+            const searchesList = document.getElementById('topSearchesList');
+            if (searches.length === 0) {
+                searchesList.innerHTML = '<li class="empty-state"><i class="fas fa-inbox"></i><p>No search data yet</p></li>';
+            } else {
+                searchesList.innerHTML = searches.map(item => `
+                    <li>
+                        <div class="list-item-content">
+                            <div class="list-item-title">${item.query}</div>
+                            <div class="list-item-subtitle">${item.type}</div>
+                        </div>
+                        <div class="list-item-count">${item.count}</div>
+                    </li>
+                `).join('');
+            }
+            
+            // Top songs
+            const songsList = document.getElementById('topSongsList');
+            if (songs.length === 0) {
+                songsList.innerHTML = '<li class="empty-state"><i class="fas fa-inbox"></i><p>No recognition data yet</p></li>';
+            } else {
+                songsList.innerHTML = songs.map(song => `
+                    <li>
+                        <div class="list-item-content">
+                            <div class="list-item-title">${song.title}</div>
+                            <div class="list-item-subtitle">${song.artist}</div>
+                        </div>
+                        <div class="list-item-count">${song.count}</div>
+                    </li>
+                `).join('');
+            }
+            
+            // Top lyrics
+            const lyricsList = document.getElementById('topLyricsList');
+            if (lyrics.length === 0) {
+                lyricsList.innerHTML = '<li class="empty-state"><i class="fas fa-inbox"></i><p>No lyrics search data yet</p></li>';
+            } else {
+                lyricsList.innerHTML = lyrics.map(lyric => `
+                    <li>
+                        <div class="list-item-content">
+                            <div class="list-item-title">${lyric.query}</div>
+                        </div>
+                        <div class="list-item-count">${lyric.count}</div>
+                    </li>
+                `).join('');
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+            loadAnalytics(30);
+        });
+    </script>
+</body>
+</html>
+

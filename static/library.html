@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Library | Chordis</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/chordis-shared.css?v=2.0">
+    <style>
+        .page-header {
+            text-align: center;
+            margin-bottom: var(--space-10);
+        }
+        
+        .page-header h1 {
+            font-size: 3.5rem;
+            margin-bottom: var(--space-3);
+        }
+        
+        .page-header p {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+        }
+        
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-6);
+            margin-bottom: var(--space-10);
+        }
+        
+        .stat-card {
+            background: var(--bg-overlay);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            text-align: center;
+            transition: all var(--transition-base);
+        }
+        
+        .stat-card:hover {
+            border-color: var(--border-color-hover);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: block;
+            margin-bottom: var(--space-2);
+        }
+        
+        .stat-label {
+            font-size: 0.9375rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        
+        .library-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: var(--space-4);
+            margin-bottom: var(--space-8);
+            flex-wrap: wrap;
+        }
+        
+        .search-box {
+            position: relative;
+            flex: 1;
+            min-width: 280px;
+        }
+        
+        .search-box i {
+            position: absolute;
+            left: var(--space-4);
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 1.125rem;
+        }
+        
+        .search-box input {
+            padding-left: calc(var(--space-4) * 3);
+        }
+        
+        .filter-buttons {
+            display: flex;
+            gap: var(--space-2);
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            padding: var(--space-3) var(--space-5);
+            border-radius: var(--radius-md);
+            border: 2px solid var(--border-color);
+            background: var(--bg-overlay);
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.9375rem;
+            cursor: pointer;
+            transition: all var(--transition-base);
+        }
+        
+        .filter-btn.active,
+        .filter-btn:hover {
+            background: var(--gradient-primary);
+            color: white;
+            border-color: transparent;
+            transform: translateY(-2px);
+        }
+        
+        .library-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: var(--space-6);
+        }
+        
+        .library-card {
+            background: var(--bg-overlay);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            transition: all var(--transition-base);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .library-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .library-card:hover::before {
+            left: 100%;
+        }
+        
+        .library-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--border-color-hover);
+            box-shadow: 0 12px 40px rgba(124, 58, 237, 0.3);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--space-5);
+        }
+        
+        .song-info h3 {
+            font-size: 1.375rem;
+            margin-bottom: var(--space-2);
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+        
+        .song-info p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin: 0;
+        }
+        
+        .card-actions {
+            display: flex;
+            gap: var(--space-2);
+        }
+        
+        .action-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            background: var(--bg-overlay);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition-base);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .action-btn:hover {
+            background: var(--gradient-primary);
+            color: white;
+            transform: scale(1.15);
+        }
+        
+        .chord-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-2);
+            margin-bottom: var(--space-5);
+        }
+        
+        .chord-tag {
+            padding: var(--space-1) var(--space-3);
+            background: rgba(124, 58, 237, 0.15);
+            border: 1px solid rgba(124, 58, 237, 0.3);
+            border-radius: var(--radius-full);
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--primary-500);
+        }
+        
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: var(--space-4);
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .analysis-date {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+        
+        .card-buttons {
+            display: flex;
+            gap: var(--space-2);
+        }
+        
+        .card-btn {
+            padding: var(--space-2) var(--space-4);
+            border-radius: var(--radius-md);
+            border: none;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-base);
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+        
+        .card-btn-primary {
+            background: var(--gradient-primary);
+            color: white;
+        }
+        
+        .card-btn-secondary {
+            background: var(--bg-overlay);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+        
+        .card-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: var(--space-12) var(--space-6);
+            color: var(--text-muted);
+        }
+        
+        .empty-state i {
+            font-size: 6rem;
+            margin-bottom: var(--space-6);
+            opacity: 0.3;
+            display: block;
+        }
+        
+        .empty-state h3 {
+            font-size: 2rem;
+            margin-bottom: var(--space-4);
+            color: var(--text-secondary);
+        }
+        
+        .empty-state p {
+            font-size: 1.125rem;
+            margin-bottom: var(--space-8);
+        }
+        
+        @media (max-width: 768px) {
+            .page-header h1 {
+                font-size: 2.25rem;
+            }
+            
+            .page-header p {
+                font-size: 1rem;
+            }
+            
+            .stats-bar {
+                grid-template-columns: 1fr;
+                gap: var(--space-4);
+            }
+            
+            .stat-number {
+                font-size: 2.5rem;
+            }
+            
+            .library-grid {
+                grid-template-columns: 1fr;
+                gap: var(--space-4);
+            }
+            
+            .library-controls {
+                flex-direction: column;
+                align-items: stretch;
+                gap: var(--space-3);
+            }
+            
+            .search-box {
+                width: 100%;
+                min-width: auto;
+            }
+            
+            .filter-buttons {
+                justify-content: center;
+                gap: var(--space-2);
+            }
+            
+            .filter-btn {
+                flex: 1;
+                min-width: auto;
+                padding: var(--space-2) var(--space-3);
+                font-size: 0.875rem;
+            }
+            
+            .library-card {
+                padding: var(--space-5);
+            }
+            
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--space-3);
+            }
+            
+            .card-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+            
+            .card-footer {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--space-3);
+            }
+            
+            .card-buttons {
+                width: 100%;
+            }
+            
+            .card-btn {
+                flex: 1;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .page-header h1 {
+                font-size: 1.875rem;
+            }
+            
+            .stats-bar {
+                grid-template-columns: repeat(3, 1fr);
+                gap: var(--space-2);
+            }
+            
+            .stat-card {
+                padding: var(--space-4);
+            }
+            
+            .stat-number {
+                font-size: 2rem;
+            }
+            
+            .stat-label {
+                font-size: 0.8125rem;
+            }
+            
+            .library-card {
+                padding: var(--space-4);
+            }
+            
+            .song-info h3 {
+                font-size: 1.125rem;
+            }
+            
+            .song-info p {
+                font-size: 0.9375rem;
+            }
+            
+            .chord-tag {
+                font-size: 0.8125rem;
+                padding: 0.125rem var(--space-2);
+            }
+            
+            .filter-btn {
+                font-size: 0.8125rem;
+                padding: var(--space-2);
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-content">
+            <a href="/" class="logo">
+                <i class="fas fa-music"></i> Chordis
+            </a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/#features">Features</a>
+                <a href="/chordai">ChordAI</a>
+                <a href="/realtime">Music Recognizer</a>
+                <a href="/library" class="active">Library</a>
+                <a href="/tutorials">Tutorials</a>
+                <a href="/analytics">Analytics</a>
+            </div>
+            <div class="auth-buttons">
+                <div id="auth-buttons">
+                    <button class="btn btn-secondary" onclick="window.location.href='/auth'">
+                        <i class="fas fa-user"></i> Sign In
+                    </button>
+                    <button class="btn btn-primary" onclick="window.location.href='/auth'">
+                        <i class="fas fa-rocket"></i> Get Started
+                    </button>
+                </div>
+                <div id="user-menu" class="user-menu">
+                    <span class="user-info">
+                        <i class="fas fa-user-circle"></i>
+                        <span id="username-display"></span>
+                    </span>
+                    <button class="btn btn-danger btn-sm" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="main">
+        <div class="container">
+            <div class="page-header">
+                <h1><i class="fas fa-book"></i> My Library</h1>
+                <p>Your personal collection of analyzed songs</p>
+            </div>
+            
+            <div class="stats-bar">
+                <div class="stat-card">
+                    <span class="stat-number" id="totalSongs">0</span>
+                    <div class="stat-label">Total Songs</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="totalChords">0</span>
+                    <div class="stat-label">Unique Chords</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="lastAnalyzed">-</span>
+                    <div class="stat-label">Last Analyzed</div>
+                </div>
+            </div>
+            
+            <div class="library-controls">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Search your library...">
+                </div>
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="recent">Recent</button>
+                    <button class="filter-btn" data-filter="favorites">Favorites</button>
+                    <button class="filter-btn" data-filter="genre">By Genre</button>
+                </div>
+            </div>
+            
+            <div class="library-grid" id="library">
+                <div class="empty-state">
+                    <i class="fas fa-music"></i>
+                    <h3>No Saved Analyses Yet</h3>
+                    <p>Start analyzing songs to build your collection!</p>
+                    <button class="btn btn-primary btn-lg" onclick="window.location.href='/'">
+                        <i class="fas fa-search"></i> Analyze Songs
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let libraryData = [];
+        let filteredData = [];
+        let currentFilter = 'all';
+        
+        async function checkAuth() {
+            try {
+                const response = await fetch('/api/current-user', { credentials: 'include' });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.user) {
+                        document.getElementById('auth-buttons').style.display = 'none';
+                        document.getElementById('user-menu').style.display = 'flex';
+                        document.getElementById('username-display').textContent = data.user.username;
+                        loadLibrary();
+                    }
+                }
+            } catch (error) {
+                console.log('Not logged in');
+            }
+        }
+        
+        async function logout() {
+            await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+            document.getElementById('auth-buttons').style.display = 'flex';
+            document.getElementById('user-menu').style.display = 'none';
+            window.location.reload();
+        }
+        
+        async function loadLibrary() {
+            try {
+                const response = await fetch('/api/saved-analyses', { credentials: 'include' });
+                console.log('Response status:', response.status);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Raw library response:', data);
+                    
+                    if (data.success && data.analyses) {
+                        // Transform backend format to library format
+                        libraryData = data.analyses.map(analysis => ({
+                            id: analysis.id,
+                            title: analysis.title,
+                            artist: analysis.title.includes(' - ') ? analysis.title.split(' - ')[1] : 'Unknown',
+                            chords: extractChordsFromData(analysis.chord_data),
+                            date: analysis.created_at || new Date().toISOString(),
+                            genre: 'Music',
+                            isFavorite: false
+                        }));
+                        
+                        filteredData = [...libraryData];
+                        console.log('Loaded', libraryData.length, 'REAL saved songs');
+                        
+                        if (libraryData.length === 0) {
+                            console.log('No saved songs yet - showing empty state');
+                        }
+                        
+                        displayLibrary();
+                        updateStats();
+                    } else {
+                        console.error('Invalid response format, loading demo');
+                        loadDemoData();
+                    }
+                } else {
+                    console.error('Response not OK:', response.status);
+                    loadDemoData();
+                }
+            } catch (error) {
+                console.error('Error loading library:', error);
+                loadDemoData();
+            }
+        }
+        
+        function extractChordsFromData(chordData) {
+            try {
+                if (!chordData) return [];
+                const data = typeof chordData === 'string' ? JSON.parse(chordData) : chordData;
+                
+                // Extract chord names from various formats
+                if (Array.isArray(data.chords)) {
+                    return data.chords.map(c => {
+                        if (typeof c === 'string') return c;
+                        if (c.chord) return c.chord;
+                        if (c.name) return c.name;
+                        return 'C'; // fallback
+                    });
+                }
+                
+                // Get unique chords only
+                return [...new Set(data.chords || [])];
+            } catch (e) {
+                console.error('Error extracting chords:', e);
+                return ['C', 'G', 'Am', 'F']; // fallback
+            }
+        }
+        
+        function loadDemoData() {
+            libraryData = [
+                { id: 1, title: "Wonderwall", artist: "Oasis", chords: ["Em", "G", "D", "C"], date: "2024-01-15", genre: "Rock", isFavorite: true },
+                { id: 2, title: "Let It Be", artist: "The Beatles", chords: ["C", "G", "Am", "F"], date: "2024-01-14", genre: "Rock", isFavorite: false },
+                { id: 3, title: "Hallelujah", artist: "Leonard Cohen", chords: ["C", "Am", "F", "G"], date: "2024-01-13", genre: "Folk", isFavorite: true }
+            ];
+            filteredData = [...libraryData];
+            displayLibrary();
+            updateStats();
+        }
+        
+        function displayLibrary() {
+            const libraryGrid = document.getElementById('library');
+            
+            if (filteredData.length === 0) {
+                libraryGrid.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-search"></i>
+                        <h3>No Results Found</h3>
+                        <p>Try adjusting your search or filter criteria</p>
+                        <button class="btn btn-secondary btn-lg" onclick="clearFilters()">
+                            <i class="fas fa-times"></i> Clear Filters
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            libraryGrid.innerHTML = filteredData.map(song => `
+                <div class="library-card" onclick="openSong('${song.id}')">
+                    <div class="card-header">
+                        <div class="song-info">
+                            <h3>${song.title}</h3>
+                            <p>${song.artist}</p>
+                        </div>
+                        <div class="card-actions">
+                            <button class="action-btn" onclick="event.stopPropagation(); toggleFavorite('${song.id}')" title="Toggle Favorite">
+                                <i class="fas fa-heart ${song.isFavorite ? '' : 'far'}"></i>
+                            </button>
+                            <button class="action-btn" onclick="event.stopPropagation(); shareSong('${song.id}')" title="Share">
+                                <i class="fas fa-share"></i>
+                            </button>
+                            <button class="action-btn" onclick="event.stopPropagation(); deleteSong('${song.id}')" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="chord-preview">
+                        ${song.chords.slice(0, 6).map(chord => `<span class="chord-tag">${chord}</span>`).join('')}
+                        ${song.chords.length > 6 ? `<span class="chord-tag">+${song.chords.length - 6}</span>` : ''}
+                    </div>
+                    
+                    <div class="card-footer">
+                        <span class="analysis-date">
+                            <i class="fas fa-calendar"></i> ${formatDate(song.date)}
+                        </span>
+                        <div class="card-buttons">
+                            <button class="card-btn card-btn-primary" onclick="event.stopPropagation(); openInChordAI('${song.id}')">
+                                <i class="fas fa-play"></i> Play
+                            </button>
+                            <button class="card-btn card-btn-secondary" onclick="event.stopPropagation(); viewDetails('${song.id}')">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function updateStats() {
+            document.getElementById('totalSongs').textContent = libraryData.length;
+            
+            const uniqueChords = new Set();
+            libraryData.forEach(song => song.chords.forEach(chord => uniqueChords.add(chord)));
+            document.getElementById('totalChords').textContent = uniqueChords.size;
+            
+            if (libraryData.length > 0) {
+                const lastSong = libraryData.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+                document.getElementById('lastAnalyzed').textContent = formatDate(lastSong.date);
+            }
+        }
+        
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+        
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            filteredData = libraryData.filter(song => 
+                song.title.toLowerCase().includes(query) ||
+                song.artist.toLowerCase().includes(query) ||
+                song.chords.some(chord => chord.toLowerCase().includes(query))
+            );
+            displayLibrary();
+        });
+        
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.dataset.filter;
+                applyFilter();
+            });
+        });
+        
+        function applyFilter() {
+            switch (currentFilter) {
+                case 'recent':
+                    filteredData = libraryData.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 10);
+                    break;
+                case 'favorites':
+                    filteredData = libraryData.filter(song => song.isFavorite);
+                    break;
+                case 'genre':
+                    filteredData = libraryData.sort((a, b) => a.genre.localeCompare(b.genre));
+                    break;
+                default:
+                    filteredData = [...libraryData];
+            }
+            displayLibrary();
+        }
+        
+        function clearFilters() {
+            document.getElementById('searchInput').value = '';
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('.filter-btn[data-filter="all"]').classList.add('active');
+            currentFilter = 'all';
+            filteredData = [...libraryData];
+            displayLibrary();
+        }
+        
+        async function openSong(songId) {
+            try {
+                console.log('Opening song:', songId);
+                
+                // Fetch the full analysis
+                const response = await fetch(`/api/saved-analysis/${songId}`, { 
+                    credentials: 'include' 
+                });
+                
+                if (!response.ok) {
+                    alert('Could not load song details');
+                    return;
+                }
+                
+                const data = await response.json();
+                console.log('Loaded analysis:', data);
+                
+                if (data.success && data.analysis) {
+                    // Store in localStorage to pass to chordai page
+                    localStorage.setItem('currentSong', JSON.stringify(data.analysis));
+                    window.location.href = `/chordai?song=${songId}`;
+                }
+            } catch (error) {
+                console.error('Error loading song:', error);
+                alert('Failed to load song');
+            }
+        }
+        
+        function openInChordAI(songId) {
+            window.location.href = `/chordai?song=${songId}`;
+        }
+        
+        function viewDetails(songId) {
+            const song = libraryData.find(s => s.id == songId);
+            if (song) {
+                alert(`Song Details:\n\nTitle: ${song.title}\nArtist: ${song.artist}\nChords: ${song.chords.join(', ')}\nGenre: ${song.genre}\nDate: ${formatDate(song.date)}`);
+            }
+        }
+        
+        async function toggleFavorite(songId) {
+            const song = libraryData.find(s => s.id == songId);
+            if (!song) return;
+            
+            // Toggle locally first for instant feedback
+            song.isFavorite = !song.isFavorite;
+            displayLibrary();
+            
+            // TODO: Update favorite status on backend if you add a favorite field to database
+            console.log('Favorite toggled for song:', songId, 'New status:', song.isFavorite);
+        }
+        
+        function shareSong(songId) {
+            const song = libraryData.find(s => s.id == songId);
+            if (song && navigator.share) {
+                navigator.share({
+                    title: `${song.title} - ${song.artist}`,
+                    text: `Check out this song analysis on Chordis!`,
+                    url: window.location.origin + `/chordai?song=${songId}`
+                });
+            } else {
+                const url = window.location.origin + `/chordai?song=${songId}`;
+                navigator.clipboard.writeText(url).then(() => alert('Link copied to clipboard!'));
+            }
+        }
+        
+        async function deleteSong(songId) {
+            if (!confirm('Are you sure you want to delete this song from your library?')) {
+                return;
+            }
+            
+            try {
+                console.log('Deleting song ID:', songId);
+                
+                // Call backend API to delete
+                const response = await fetch(`/api/saved-analysis/${songId}`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                console.log('Delete response:', data);
+                
+                if (data.success || response.ok) {
+                    // Remove from local data
+                    libraryData = libraryData.filter(s => s.id != songId);
+                    filteredData = filteredData.filter(s => s.id != songId);
+                    displayLibrary();
+                    updateStats();
+                    
+                    // Show success message
+                    showToast('Song deleted from your library', 'success');
+                } else {
+                    throw new Error(data.error || 'Delete failed');
+                }
+            } catch (error) {
+                console.error('Delete error:', error);
+                showToast('Failed to delete song: ' + error.message, 'error');
+            }
+        }
+        
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                top: 100px;
+                right: 20px;
+                background: ${type === 'success' ? '#10b981' : '#ef4444'};
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                font-weight: 600;
+                z-index: 10000;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => toast.remove(), 3000);
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+        });
+    </script>
+</body>
+</html>
