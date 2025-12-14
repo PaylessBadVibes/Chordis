@@ -3575,6 +3575,124 @@ def check_admin():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@app.route("/api/seed-tutorials", methods=["POST"])
+def seed_tutorials():
+    """Seed default tutorials including external tools"""
+    try:
+        # Default tutorials data
+        default_tutorials = [
+            {
+                'title': 'Chromatone Helper - Chord Progression Tool',
+                'description': 'A powerful web-based tool to create chord progressions and arpeggios, visualize them on different instruments, and export as MIDI. Perfect for learning music theory and composition.',
+                'content_type': 'tool',
+                'skill_level': 'all',
+                'content': '''
+## Features
+- Create chord progressions and arpeggios using a declarative DSL
+- Visualize music on guitar, piano, bass, and more
+- Visual cues show which notes to play - no staff notation needed!
+- Export your creations as MIDI files
+- Works offline on mobile browsers
+
+## Quick Examples
+- Jazz progression: `2 5 1`
+- Pachelbel's Canon: `1 5 6 3 4 1 4 5`
+- D# major scale: `1 2 3 4 5 6 7 k=D#4`
+
+## Try It Now
+Click the link below to open the multi-track sequencer!
+                ''',
+                'video_url': 'https://iostream.github.io/chromatone-helper/multi-track-sequencer/',
+                'thumbnail': 'https://opengraph.githubassets.com/1/iostream/chromatone-helper',
+                'duration': None,
+                'order': 1,
+                'is_published': True
+            },
+            {
+                'title': 'Guitar Chord Basics for Beginners',
+                'description': 'Learn the essential open chords every guitarist needs to know: C, G, D, E, A, and Am.',
+                'content_type': 'video',
+                'skill_level': 'beginner',
+                'content': 'Master the fundamental open chords that form the foundation of thousands of songs.',
+                'video_url': 'https://www.youtube.com/watch?v=4nJUxrDzpoo',
+                'thumbnail': 'https://img.youtube.com/vi/4nJUxrDzpoo/maxresdefault.jpg',
+                'duration': 12,
+                'order': 2,
+                'is_published': True
+            },
+            {
+                'title': 'Understanding Music Theory: Keys & Scales',
+                'description': 'Learn how keys and scales work together to create harmonious music.',
+                'content_type': 'video',
+                'skill_level': 'beginner',
+                'content': 'A comprehensive guide to understanding musical keys, major and minor scales.',
+                'video_url': 'https://www.youtube.com/watch?v=rgaTLrZGlk0',
+                'thumbnail': 'https://img.youtube.com/vi/rgaTLrZGlk0/maxresdefault.jpg',
+                'duration': 18,
+                'order': 3,
+                'is_published': True
+            },
+            {
+                'title': 'Piano Chords for Beginners',
+                'description': 'Start playing piano with these essential chord shapes and progressions.',
+                'content_type': 'video',
+                'skill_level': 'beginner',
+                'content': 'Learn to play beautiful piano chords with proper finger positioning.',
+                'video_url': 'https://www.youtube.com/watch?v=fevKfNIUJLk',
+                'thumbnail': 'https://img.youtube.com/vi/fevKfNIUJLk/maxresdefault.jpg',
+                'duration': 15,
+                'order': 4,
+                'is_published': True
+            },
+            {
+                'title': 'Barre Chords Made Easy',
+                'description': 'Master barre chords with these tips and exercises for guitar players.',
+                'content_type': 'video',
+                'skill_level': 'intermediate',
+                'content': 'Overcome the barre chord challenge with proper technique and practice methods.',
+                'video_url': 'https://www.youtube.com/watch?v=DrlF4Tc8qC8',
+                'thumbnail': 'https://img.youtube.com/vi/DrlF4Tc8qC8/maxresdefault.jpg',
+                'duration': 14,
+                'order': 5,
+                'is_published': True
+            },
+            {
+                'title': 'Circle of Fifths Explained',
+                'description': 'Understand the circle of fifths and how to use it for songwriting and improvisation.',
+                'content_type': 'video',
+                'skill_level': 'intermediate',
+                'content': 'The circle of fifths is a powerful tool for understanding music theory.',
+                'video_url': 'https://www.youtube.com/watch?v=d1aJ6HixSe0',
+                'thumbnail': 'https://img.youtube.com/vi/d1aJ6HixSe0/maxresdefault.jpg',
+                'duration': 11,
+                'order': 6,
+                'is_published': True
+            }
+        ]
+        
+        added_count = 0
+        for tutorial_data in default_tutorials:
+            # Check if tutorial with same title exists
+            existing = Tutorial.query.filter_by(title=tutorial_data['title']).first()
+            if not existing:
+                tutorial = Tutorial(**tutorial_data)
+                db.session.add(tutorial)
+                added_count += 1
+        
+        db.session.commit()
+        
+        total_tutorials = Tutorial.query.count()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Added {added_count} new tutorials',
+            'total_tutorials': total_tutorials
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route("/api/setup-admin", methods=["POST"])
 def setup_admin():
     """
