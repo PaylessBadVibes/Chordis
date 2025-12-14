@@ -742,6 +742,99 @@
             border-color: var(--primary-500);
             transform: translateY(-2px);
         }
+        
+        /* Transpose Control Styles */
+        .transpose-control {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-4);
+            background: var(--bg-overlay);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--space-4);
+            flex-wrap: wrap;
+        }
+        
+        .transpose-label {
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.9375rem;
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+        
+        .transpose-buttons {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+        
+        .transpose-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-md);
+            background: var(--bg-overlay);
+            border: 2px solid var(--border-color);
+            color: var(--text-secondary);
+            font-weight: 700;
+            font-size: 1.25rem;
+            cursor: pointer;
+            transition: all var(--transition-base);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .transpose-btn:hover {
+            border-color: var(--primary-500);
+            color: var(--primary-500);
+            transform: scale(1.1);
+        }
+        
+        .transpose-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .transpose-value {
+            min-width: 80px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 1.125rem;
+            color: var(--primary-500);
+            padding: var(--space-2) var(--space-3);
+            background: rgba(59, 130, 246, 0.15);
+            border-radius: var(--radius-md);
+        }
+        
+        .transpose-reset {
+            padding: var(--space-2) var(--space-3);
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all var(--transition-base);
+        }
+        
+        .transpose-reset:hover {
+            border-color: var(--primary-500);
+            color: var(--primary-500);
+        }
+        
+        @media (max-width: 480px) {
+            .transpose-control {
+                justify-content: center;
+            }
+            
+            .transpose-label {
+                width: 100%;
+                justify-content: center;
+                margin-bottom: var(--space-2);
+            }
+        }
     </style>
 </head>
 <body>
@@ -823,6 +916,26 @@
                                 <i class="fas fa-music"></i>
                                 Chord Progression
                             </h3>
+                            
+                            <!-- Transpose Control -->
+                            <div class="transpose-control">
+                                <span class="transpose-label">
+                                    <i class="fas fa-arrows-alt-v"></i> Transpose:
+                                </span>
+                                <div class="transpose-buttons">
+                                    <button class="transpose-btn" onclick="transposeChords(-1)" title="Down 1 semitone">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                    <span class="transpose-value" id="transposeValue">0</span>
+                                    <button class="transpose-btn" onclick="transposeChords(1)" title="Up 1 semitone">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                                <button class="transpose-reset" onclick="resetTranspose()">
+                                    <i class="fas fa-undo"></i> Reset
+                                </button>
+                            </div>
+                            
                             <div class="chords-grid" id="chords">
                                 <div class="empty-state">
                                     <i class="fas fa-music"></i>
@@ -1022,9 +1135,122 @@
         let isPlaying = false;
         let currentChordIndex = 0;
         let chordData = [];
+        let originalChordData = []; // Store original chords for transpose
+        let transposeValue = 0; // Current transpose semitones
         let playInterval = null;
         let audioPlayer = null;
         let currentSongData = null;
+        
+        // Chromatic scale for transposition
+        const chromaticScale = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+        const flatScale = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+        
+        // Map enharmonic equivalents
+        const enharmonicMap = {
+            'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#',
+            'C#': 'Db', 'D#': 'Eb', 'F#': 'Gb', 'G#': 'Ab', 'A#': 'Bb'
+        };
+        
+        // Transpose a single chord
+        function transposeSingleChord(chord, semitones) {
+            if (!chord || chord === 'N' || chord === 'none') return chord;
+            
+            // Extract root note and quality
+            let root = '';
+            let quality = '';
+            
+            // Match root note (e.g., C, C#, Db, etc.)
+            const match = chord.match(/^([A-G][#b]?)(.*)/);
+            if (!match) return chord;
+            
+            root = match[1];
+            quality = match[2] || '';
+            
+            // Normalize root to sharp notation
+            if (enharmonicMap[root] && root.includes('b')) {
+                root = enharmonicMap[root];
+            }
+            
+            // Find current position
+            let pos = chromaticScale.indexOf(root);
+            if (pos === -1) return chord;
+            
+            // Calculate new position
+            let newPos = (pos + semitones + 12) % 12;
+            let newRoot = chromaticScale[newPos];
+            
+            // Convert some sharps to flats for readability
+            const preferFlats = ['Db', 'Eb', 'Gb', 'Ab', 'Bb'];
+            if (newRoot.includes('#') && preferFlats.includes(flatScale[newPos])) {
+                // Use flat notation for common keys
+                const flatRoot = flatScale[newPos];
+                // Prefer flats for certain keys
+                if (['Db', 'Eb', 'Ab', 'Bb'].includes(flatRoot)) {
+                    newRoot = flatRoot;
+                }
+            }
+            
+            return newRoot + quality;
+        }
+        
+        // Transpose all chords
+        function transposeChords(semitones) {
+            transposeValue += semitones;
+            
+            // Limit to +/- 11 semitones
+            if (transposeValue > 11) transposeValue = 11;
+            if (transposeValue < -11) transposeValue = -11;
+            
+            // Update display
+            updateTransposeDisplay();
+            
+            // Transpose from original chords
+            if (originalChordData.length > 0) {
+                chordData = originalChordData.map(chord => transposeSingleChord(chord, transposeValue));
+                displayTransposedChords(chordData);
+            }
+        }
+        
+        // Reset transpose
+        function resetTranspose() {
+            transposeValue = 0;
+            updateTransposeDisplay();
+            
+            if (originalChordData.length > 0) {
+                chordData = [...originalChordData];
+                displayTransposedChords(chordData);
+            }
+        }
+        
+        // Update transpose value display
+        function updateTransposeDisplay() {
+            const display = document.getElementById('transposeValue');
+            if (display) {
+                const sign = transposeValue > 0 ? '+' : '';
+                display.textContent = sign + transposeValue;
+                
+                // Color code
+                if (transposeValue > 0) {
+                    display.style.color = '#22c55e'; // Green for up
+                } else if (transposeValue < 0) {
+                    display.style.color = '#ef4444'; // Red for down
+                } else {
+                    display.style.color = 'var(--primary-500)'; // Default blue
+                }
+            }
+        }
+        
+        // Display transposed chords (preserves selection state)
+        function displayTransposedChords(chords) {
+            const chordsGrid = document.getElementById('chords');
+            if (!chordsGrid || !chords || chords.length === 0) return;
+            
+            chordsGrid.innerHTML = chords.map((chord, index) => {
+                const chordName = typeof chord === 'string' ? chord : (chord.name || chord.chord);
+                const isActive = index === currentChordIndex ? 'active' : '';
+                return `<div class="chord-item ${isActive}" data-index="${index}" onclick="selectChord(${index})">${chordName}</div>`;
+            }).join('');
+        }
         
         // Reset all state - prevents stale data between songs
         function resetState() {
@@ -1034,6 +1260,8 @@
             isPlaying = false;
             currentChordIndex = 0;
             chordData = [];
+            originalChordData = []; // Clear original chords for transpose
+            transposeValue = 0; // Reset transpose
             currentSongData = null;
             
             // Stop any playing interval
@@ -1287,6 +1515,11 @@
         }
         
         function displayChords(chords) {
+            // Store original chords for transpose (only on initial load)
+            if (originalChordData.length === 0 || transposeValue === 0) {
+                originalChordData = chords.map(c => typeof c === 'string' ? c : (c.name || c.chord));
+            }
+            
             chordData = chords;
             const chordsGrid = document.getElementById('chords');
             
@@ -1296,6 +1529,10 @@
                     return `<div class="chord-item" data-index="${index}" onclick="selectChord(${index})">${chordName}</div>`;
                 }).join('');
             }
+            
+            // Reset transpose display when new chords loaded
+            transposeValue = 0;
+            updateTransposeDisplay();
         }
         
         function updateChordInfo(title, artist) {
