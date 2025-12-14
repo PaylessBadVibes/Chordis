@@ -786,7 +786,8 @@ textarea::placeholder {
         background: rgba(59, 130, 246, 0.2);
     }
     
-    .auth-buttons {
+    .auth-buttons,
+    .nav-buttons {
         position: fixed;
         bottom: 0;
         left: -100%;
@@ -800,11 +801,13 @@ textarea::placeholder {
         border-top: 1px solid rgba(255, 255, 255, 0.1);
     }
     
-    .auth-buttons.active {
+    .auth-buttons.active,
+    .nav-buttons.active {
         left: 0;
     }
     
-    .auth-buttons .btn {
+    .auth-buttons .btn,
+    .nav-buttons .btn {
         width: 100%;
         justify-content: center;
     }

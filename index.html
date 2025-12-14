@@ -405,9 +405,21 @@
             }
             
             .nav-buttons {
+                position: fixed;
+                bottom: 0;
+                left: -100%;
+                width: 280px;
+                padding: 1.5rem 2rem;
+                background: #0f172a;
                 flex-direction: column;
-                gap: 0.5rem;
-                width: 100%;
+                gap: 0.75rem;
+                z-index: 999;
+                transition: left 0.3s ease;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            
+            .nav-buttons.active {
+                left: 0;
             }
             
             .nav-buttons .btn {
