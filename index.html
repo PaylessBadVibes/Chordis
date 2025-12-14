@@ -365,6 +365,21 @@
             z-index: 1001;
         }
         
+        .mobile-nav-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+        }
+        
+        .mobile-nav-overlay.active {
+            display: block;
+        }
+        
         @media (max-width: 768px) {
             nav {
                 padding: 1rem;
@@ -372,10 +387,14 @@
             
             .nav-content {
                 position: relative;
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
             }
             
             .mobile-menu-toggle {
                 display: block;
+                order: 3;
             }
             
             .nav-links {
@@ -384,13 +403,13 @@
                 left: -100%;
                 width: 280px;
                 height: 100vh;
-                background: #0f0f23;
+                background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
                 flex-direction: column;
                 padding: 5rem 2rem 2rem;
-                gap: 1.5rem;
-                transition: left 0.25s ease;
-                z-index: 1000;
-                border-right: 1px solid rgba(255, 255, 255, 0.1);
+                gap: 0.5rem;
+                transition: left 0.3s ease;
+                z-index: 999;
+                box-shadow: 5px 0 20px rgba(0, 0, 0, 0.3);
                 overflow-y: auto;
             }
             
@@ -399,9 +418,17 @@
             }
             
             .nav-links a {
-                font-size: 1.125rem;
-                padding: 0.75rem 0;
+                font-size: 1rem;
+                padding: 0.75rem 1rem;
                 border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                width: 100%;
+                display: block;
+                text-align: left;
+            }
+            
+            .nav-links a:hover,
+            .nav-links a.active {
+                background: rgba(59, 130, 246, 0.2);
             }
             
             .nav-buttons {
