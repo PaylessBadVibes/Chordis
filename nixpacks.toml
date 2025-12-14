@@ -1,7 +1,14 @@
-# Force pip to work in Nix environment
+# Chordis - Railway Build Config
+[phases.setup]
+nixPkgs = ["python311", "ffmpeg"]
+
 [phases.install]
+dependsOn = ["setup"]
 cmds = ["pip install --no-cache-dir --break-system-packages -r requirements.txt"]
 
 [start]
 cmd = "gunicorn api:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120"
+
+[variables]
+PIP_BREAK_SYSTEM_PACKAGES = "1"
 
