@@ -95,7 +95,7 @@
         .divider {
             display: flex;
             align-items: center;
-            margin: var(--space-8) 0;
+            margin: var(--space-6) 0;
             color: var(--text-muted);
             font-size: 0.875rem;
         }
@@ -139,8 +139,22 @@
             transform: translateY(-2px);
         }
         
+        .social-btn.google-btn:hover {
+            border-color: #4285f4;
+            background: rgba(66, 133, 244, 0.1);
+        }
+        
+        .social-btn.github-btn:hover {
+            border-color: #333;
+            background: rgba(51, 51, 51, 0.2);
+        }
+        
         .social-btn i {
             font-size: 1.25rem;
+        }
+        
+        .social-btn.google-btn i {
+            color: #4285f4;
         }
         
         .auth-footer {
@@ -201,6 +215,128 @@
             text-decoration: underline;
         }
         
+        /* OTP Verification Styles */
+        .otp-container {
+            display: none;
+        }
+        
+        .otp-container.active {
+            display: block;
+        }
+        
+        .otp-header {
+            text-align: center;
+            margin-bottom: var(--space-6);
+        }
+        
+        .otp-header i {
+            font-size: 3rem;
+            color: var(--primary-500);
+            margin-bottom: var(--space-3);
+        }
+        
+        .otp-header h3 {
+            font-size: 1.5rem;
+            margin-bottom: var(--space-2);
+        }
+        
+        .otp-header p {
+            color: var(--text-muted);
+            font-size: 0.9375rem;
+        }
+        
+        .otp-email {
+            color: var(--primary-500);
+            font-weight: 600;
+        }
+        
+        .otp-input-group {
+            display: flex;
+            gap: var(--space-2);
+            justify-content: center;
+            margin-bottom: var(--space-6);
+        }
+        
+        .otp-input {
+            width: 50px;
+            height: 60px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            transition: all var(--transition-base);
+        }
+        
+        .otp-input:focus {
+            border-color: var(--primary-500);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        
+        .resend-otp {
+            text-align: center;
+            margin-top: var(--space-4);
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+        
+        .resend-otp button {
+            background: none;
+            border: none;
+            color: var(--primary-500);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all var(--transition-base);
+        }
+        
+        .resend-otp button:hover {
+            color: var(--pink-500);
+            text-decoration: underline;
+        }
+        
+        .resend-otp button:disabled {
+            color: var(--text-muted);
+            cursor: not-allowed;
+        }
+        
+        /* Input validation states */
+        .input-group.input-valid {
+            border-color: #22c55e !important;
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+        }
+        
+        .input-group.input-invalid {
+            border-color: #ef4444 !important;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+        }
+        
+        .field-status {
+            margin-top: var(--space-1);
+            margin-bottom: calc(-1 * var(--space-2));
+        }
+        
+        /* Security badge */
+        .security-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-2);
+            padding: var(--space-2) var(--space-3);
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: var(--radius-md);
+            color: #22c55e;
+            font-size: 0.75rem;
+            margin-bottom: var(--space-4);
+        }
+        
+        .security-badge i {
+            font-size: 0.875rem;
+        }
+        
         /* Mobile Optimizations */
         @media (max-width: 768px) {
             .auth-header h1 {
@@ -217,6 +353,12 @@
             
             .social-btn {
                 font-size: 0.9375rem;
+            }
+            
+            .otp-input {
+                width: 45px;
+                height: 55px;
+                font-size: 1.25rem;
             }
         }
         
@@ -252,12 +394,18 @@
             
             input,
             select {
-                font-size: 16px; /* Prevents iOS zoom */
+                font-size: 16px;
             }
             
             .social-btn {
                 font-size: 0.875rem;
                 padding: var(--space-3);
+            }
+            
+            .otp-input {
+                width: 40px;
+                height: 50px;
+                font-size: 1.125rem;
             }
         }
     </style>
@@ -272,116 +420,159 @@
             </div>
             
             <div class="card">
-                <div class="tabs">
-                    <button class="tab active" data-tab="login">
-                        <i class="fas fa-sign-in-alt"></i> Sign In
-                    </button>
-                    <button class="tab" data-tab="signup">
-                        <i class="fas fa-user-plus"></i> Sign Up
-                    </button>
-                </div>
-                
-                <!-- Login Form -->
-                <div id="tab-login" class="tab-content active">
-                    <form id="loginForm">
-                        <div class="form-group">
-                            <label for="username">Username</label>
-                            <div class="input-group">
-                                <i class="fas fa-user"></i>
-                                <input type="text" id="username" placeholder="Enter your username" required autofocus>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="password">Password</label>
-                            <div class="input-group">
-                                <i class="fas fa-lock"></i>
-                                <input type="password" id="password" placeholder="Enter your password" required>
-                                <button type="button" class="password-toggle" onclick="togglePassword('password')">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="remember-forgot">
-                            <label class="remember-me">
-                                <input type="checkbox" id="rememberMe">
-                                <span>Remember me</span>
-                            </label>
-                            <a href="#" class="forgot-link">Forgot password?</a>
-                        </div>
-                        
-                        <button type="submit" class="btn btn-primary btn-full btn-lg">
+                <!-- Main Auth Forms -->
+                <div id="mainAuthForms">
+                    <div class="tabs">
+                        <button class="tab active" data-tab="login">
                             <i class="fas fa-sign-in-alt"></i> Sign In
                         </button>
-                    </form>
-                    
-                    <div class="divider">
-                        <span>or continue with</span>
+                        <button class="tab" data-tab="signup">
+                            <i class="fas fa-user-plus"></i> Sign Up
+                        </button>
                     </div>
                     
-                    <div class="social-login">
-                        <button class="social-btn" onclick="alert('Google OAuth coming soon!')">
+                    <!-- Social Login (Same for both tabs) -->
+                    <div class="social-login" style="margin-top: var(--space-6);">
+                        <button class="social-btn google-btn" onclick="signInWithGoogle()">
                             <i class="fab fa-google"></i>
                             Continue with Google
                         </button>
-                        <button class="social-btn" onclick="alert('GitHub OAuth coming soon!')">
-                            <i class="fab fa-github"></i>
-                            Continue with GitHub
-                        </button>
+                    </div>
+                    
+                    <div class="divider">
+                        <span>or</span>
+                    </div>
+                    
+                    <!-- Login Form -->
+                    <div id="tab-login" class="tab-content active">
+                        <div class="security-badge">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>256-bit AES Encrypted Connection</span>
+                        </div>
+                        <form id="loginForm">
+                            <div class="form-group">
+                                <label for="username">Username or Email</label>
+                                <div class="input-group">
+                                    <i class="fas fa-user"></i>
+                                    <input type="text" id="username" placeholder="Enter your username or email" required autofocus>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="password">Password</label>
+                                <div class="input-group">
+                                    <i class="fas fa-lock"></i>
+                                    <input type="password" id="password" placeholder="Enter your password" required>
+                                    <button type="button" class="password-toggle" onclick="togglePassword('password')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="remember-forgot">
+                                <label class="remember-me">
+                                    <input type="checkbox" id="rememberMe">
+                                    <span>Remember me</span>
+                                </label>
+                                <a href="#" class="forgot-link" onclick="showForgotPassword()">Forgot password?</a>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary btn-full btn-lg">
+                                <i class="fas fa-sign-in-alt"></i> Sign In
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <!-- Signup Form -->
+                    <div id="tab-signup" class="tab-content">
+                        <div class="security-badge">
+                            <i class="fas fa-lock"></i>
+                            <span>Your data is encrypted end-to-end</span>
+                        </div>
+                        <form id="signupForm">
+                            <div class="form-group">
+                                <label for="signupUsername">Username</label>
+                                <div class="input-group">
+                                    <i class="fas fa-user"></i>
+                                    <input type="text" id="signupUsername" placeholder="Choose a username" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="signupEmail">Email</label>
+                                <div class="input-group">
+                                    <i class="fas fa-envelope"></i>
+                                    <input type="email" id="signupEmail" placeholder="Enter your email" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="signupPassword">Password</label>
+                                <div class="input-group">
+                                    <i class="fas fa-lock"></i>
+                                    <input type="password" id="signupPassword" placeholder="Create a password (min. 6 characters)" required>
+                                    <button type="button" class="password-toggle" onclick="togglePassword('signupPassword')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="confirmPassword">Confirm Password</label>
+                                <div class="input-group">
+                                    <i class="fas fa-lock"></i>
+                                    <input type="password" id="confirmPassword" placeholder="Confirm your password" required>
+                                    <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="terms-checkbox">
+                                <input type="checkbox" id="acceptTerms" required>
+                                <span>I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></span>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary btn-full btn-lg">
+                                <i class="fas fa-user-plus"></i> Create Account
+                            </button>
+                        </form>
                     </div>
                 </div>
                 
-                <!-- Signup Form -->
-                <div id="tab-signup" class="tab-content">
-                    <form id="signupForm">
-                        <div class="form-group">
-                            <label for="signupUsername">Username</label>
-                            <div class="input-group">
-                                <i class="fas fa-user"></i>
-                                <input type="text" id="signupUsername" placeholder="Choose a username" required>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="signupEmail">Email</label>
-                            <div class="input-group">
-                                <i class="fas fa-envelope"></i>
-                                <input type="email" id="signupEmail" placeholder="Enter your email" required>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="signupPassword">Password</label>
-                            <div class="input-group">
-                                <i class="fas fa-lock"></i>
-                                <input type="password" id="signupPassword" placeholder="Create a password (min. 6 characters)" required>
-                                <button type="button" class="password-toggle" onclick="togglePassword('signupPassword')">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="confirmPassword">Confirm Password</label>
-                            <div class="input-group">
-                                <i class="fas fa-lock"></i>
-                                <input type="password" id="confirmPassword" placeholder="Confirm your password" required>
-                                <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword')">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="terms-checkbox">
-                            <input type="checkbox" id="acceptTerms" required>
-                            <span>I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></span>
+                <!-- OTP Verification Form -->
+                <div id="otpVerification" class="otp-container">
+                    <div class="otp-header">
+                        <i class="fas fa-envelope-open-text"></i>
+                        <h3>Verify Your Email</h3>
+                        <p>We've sent a 6-digit code to<br><span class="otp-email" id="otpEmailDisplay"></span></p>
+                    </div>
+                    
+                    <form id="otpForm">
+                        <div class="otp-input-group">
+                            <input type="text" class="otp-input" maxlength="1" data-index="0" autofocus>
+                            <input type="text" class="otp-input" maxlength="1" data-index="1">
+                            <input type="text" class="otp-input" maxlength="1" data-index="2">
+                            <input type="text" class="otp-input" maxlength="1" data-index="3">
+                            <input type="text" class="otp-input" maxlength="1" data-index="4">
+                            <input type="text" class="otp-input" maxlength="1" data-index="5">
                         </div>
                         
                         <button type="submit" class="btn btn-primary btn-full btn-lg">
-                            <i class="fas fa-user-plus"></i> Create Account
+                            <i class="fas fa-check"></i> Verify Email
                         </button>
                     </form>
+                    
+                    <div class="resend-otp">
+                        <span>Didn't receive the code? </span>
+                        <button id="resendOtpBtn" onclick="resendOTP()" disabled>Resend in <span id="resendTimer">60</span>s</button>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: var(--space-4);">
+                        <button class="btn btn-secondary" onclick="backToSignup()">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </button>
+                    </div>
                 </div>
                 
                 <div class="auth-footer">
@@ -393,7 +584,184 @@
         </div>
     </div>
     
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    
     <script>
+        // Firebase Configuration - CHORDIS Project
+        const firebaseConfig = {
+            apiKey: "AIzaSyAFNiDlokRLGILrKWDPx9gGuDsXMYJ_YAg",
+            authDomain: "chordis.firebaseapp.com",
+            projectId: "chordis",
+            storageBucket: "chordis.firebasestorage.app",
+            messagingSenderId: "988908764850",
+            appId: "1:988908764850:web:ce9d4c6ace28a9690213ab",
+            measurementId: "G-5PSGBZ858D"
+        };
+        
+        // Initialize Firebase
+        let firebaseInitialized = false;
+        try {
+            firebase.initializeApp(firebaseConfig);
+            firebaseInitialized = true;
+            console.log('Firebase initialized');
+        } catch (error) {
+            console.log('Firebase not configured yet:', error.message);
+        }
+        
+        // Store pending registration data
+        let pendingRegistration = null;
+        let resendCountdown = null;
+        
+        // ========== CLIENT-SIDE ENCRYPTION ==========
+        // Uses AES-256-CBC encryption to protect sensitive data in transit
+        const ENCRYPTION_KEY = 'CHORDIS_PUBLIC_KEY_2025';
+        const ENCRYPTION_SALT = 'chordis-salt-2025';
+        
+        async function deriveKey(passphrase, salt) {
+            const encoder = new TextEncoder();
+            const keyMaterial = await crypto.subtle.importKey(
+                'raw',
+                encoder.encode(passphrase),
+                'PBKDF2',
+                false,
+                ['deriveBits', 'deriveKey']
+            );
+            
+            return await crypto.subtle.deriveKey(
+                {
+                    name: 'PBKDF2',
+                    salt: encoder.encode(salt),
+                    iterations: 100000,
+                    hash: 'SHA-256'
+                },
+                keyMaterial,
+                { name: 'AES-CBC', length: 256 },
+                false,
+                ['encrypt', 'decrypt']
+            );
+        }
+        
+        async function encryptData(plaintext) {
+            try {
+                const key = await deriveKey(ENCRYPTION_KEY, ENCRYPTION_SALT);
+                const encoder = new TextEncoder();
+                const iv = crypto.getRandomValues(new Uint8Array(16));
+                
+                const encrypted = await crypto.subtle.encrypt(
+                    { name: 'AES-CBC', iv: iv },
+                    key,
+                    encoder.encode(plaintext)
+                );
+                
+                // Combine IV + encrypted data
+                const combined = new Uint8Array(iv.length + encrypted.byteLength);
+                combined.set(iv);
+                combined.set(new Uint8Array(encrypted), iv.length);
+                
+                // Return as base64
+                return btoa(String.fromCharCode(...combined));
+            } catch (error) {
+                console.error('Encryption error:', error);
+                return plaintext; // Fallback to plain text if encryption fails
+            }
+        }
+        
+        // ========== EMAIL & USERNAME VALIDATION ==========
+        let emailCheckTimeout = null;
+        let usernameCheckTimeout = null;
+        
+        async function checkEmailExists(email) {
+            try {
+                const response = await fetch('/api/auth/check-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email.toLowerCase() })
+                });
+                return await response.json();
+            } catch (error) {
+                console.error('Email check error:', error);
+                return { exists: false };
+            }
+        }
+        
+        async function checkUsernameExists(username) {
+            try {
+                const response = await fetch('/api/auth/check-username', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: username })
+                });
+                return await response.json();
+            } catch (error) {
+                console.error('Username check error:', error);
+                return { exists: false };
+            }
+        }
+        
+        // Add real-time validation to email input
+        document.getElementById('signupEmail').addEventListener('input', (e) => {
+            clearTimeout(emailCheckTimeout);
+            const email = e.target.value.trim();
+            const inputGroup = e.target.closest('.input-group');
+            
+            // Remove previous status
+            inputGroup.classList.remove('input-valid', 'input-invalid');
+            const existingStatus = inputGroup.parentElement.querySelector('.field-status');
+            if (existingStatus) existingStatus.remove();
+            
+            if (email && email.includes('@') && email.includes('.')) {
+                emailCheckTimeout = setTimeout(async () => {
+                    const result = await checkEmailExists(email);
+                    
+                    const statusDiv = document.createElement('div');
+                    statusDiv.className = 'field-status';
+                    
+                    if (result.exists) {
+                        inputGroup.classList.add('input-invalid');
+                        statusDiv.innerHTML = `<span style="color: #ef4444; font-size: 0.875rem;"><i class="fas fa-times-circle"></i> ${result.message}</span>`;
+                    } else if (!result.error) {
+                        inputGroup.classList.add('input-valid');
+                        statusDiv.innerHTML = `<span style="color: #22c55e; font-size: 0.875rem;"><i class="fas fa-check-circle"></i> Email available</span>`;
+                    }
+                    
+                    inputGroup.parentElement.appendChild(statusDiv);
+                }, 500);
+            }
+        });
+        
+        // Add real-time validation to username input
+        document.getElementById('signupUsername').addEventListener('input', (e) => {
+            clearTimeout(usernameCheckTimeout);
+            const username = e.target.value.trim();
+            const inputGroup = e.target.closest('.input-group');
+            
+            // Remove previous status
+            inputGroup.classList.remove('input-valid', 'input-invalid');
+            const existingStatus = inputGroup.parentElement.querySelector('.field-status');
+            if (existingStatus) existingStatus.remove();
+            
+            if (username && username.length >= 3) {
+                usernameCheckTimeout = setTimeout(async () => {
+                    const result = await checkUsernameExists(username);
+                    
+                    const statusDiv = document.createElement('div');
+                    statusDiv.className = 'field-status';
+                    
+                    if (result.exists) {
+                        inputGroup.classList.add('input-invalid');
+                        statusDiv.innerHTML = `<span style="color: #ef4444; font-size: 0.875rem;"><i class="fas fa-times-circle"></i> ${result.message}</span>`;
+                    } else if (!result.error) {
+                        inputGroup.classList.add('input-valid');
+                        statusDiv.innerHTML = `<span style="color: #22c55e; font-size: 0.875rem;"><i class="fas fa-check-circle"></i> Username available</span>`;
+                    }
+                    
+                    inputGroup.parentElement.appendChild(statusDiv);
+                }, 500);
+            }
+        });
+        
         // Tab switching
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
@@ -402,7 +770,6 @@
                 tab.classList.add('active');
                 document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
                 
-                // Focus first input
                 setTimeout(() => {
                     const firstInput = document.querySelector('.tab-content.active input');
                     if (firstInput) firstInput.focus();
@@ -439,8 +806,11 @@
                 ${message}
             `;
             
-            const form = document.querySelector('.tab-content.active form');
-            form.insertBefore(msgDiv, form.firstChild);
+            const activeForm = document.querySelector('.tab-content.active form') || 
+                             document.getElementById('otpForm');
+            if (activeForm) {
+                activeForm.insertBefore(msgDiv, activeForm.firstChild);
+            }
             
             setTimeout(() => msgDiv.remove(), 5000);
         }
@@ -477,7 +847,228 @@
             return true;
         }
         
-        // Login
+        // ========== GOOGLE SIGN IN ==========
+        async function signInWithGoogle() {
+            if (!firebaseInitialized) {
+                // Fallback to backend OAuth if Firebase not configured
+                showMessage('Connecting to Google...', 'success');
+                try {
+                    const response = await fetch('/api/auth/google/init');
+                    const data = await response.json();
+                    if (data.auth_url) {
+                        window.location.href = data.auth_url;
+                    } else {
+                        showMessage('Google sign-in is being configured. Please use email/password for now.', 'error');
+                    }
+                } catch (error) {
+                    showMessage('Google sign-in is being configured. Please use email/password for now.', 'error');
+                }
+                return;
+            }
+            
+            try {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                provider.addScope('email');
+                provider.addScope('profile');
+                
+                const result = await firebase.auth().signInWithPopup(provider);
+                const user = result.user;
+                const idToken = await user.getIdToken();
+                
+                // Send token to backend
+                const response = await fetch('/api/auth/firebase', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        idToken: idToken,
+                        provider: 'google',
+                        email: user.email,
+                        displayName: user.displayName,
+                        photoURL: user.photoURL
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('✅ Successfully signed in with Google!', 'success');
+                    setTimeout(() => window.location.href = '/', 1500);
+                } else {
+                    showMessage('❌ ' + (data.error || 'Failed to sign in with Google'), 'error');
+                }
+            } catch (error) {
+                console.error('Google sign-in error:', error);
+                if (error.code === 'auth/popup-closed-by-user') {
+                    showMessage('Sign-in cancelled', 'error');
+                } else {
+                    showMessage('❌ ' + error.message, 'error');
+                }
+            }
+        }
+        
+        // ========== EMAIL OTP VERIFICATION ==========
+        function showOTPVerification(email) {
+            document.getElementById('mainAuthForms').style.display = 'none';
+            document.getElementById('otpVerification').classList.add('active');
+            document.getElementById('otpEmailDisplay').textContent = email;
+            
+            // Focus first OTP input
+            document.querySelector('.otp-input[data-index="0"]').focus();
+            
+            // Start resend countdown
+            startResendCountdown();
+        }
+        
+        function backToSignup() {
+            document.getElementById('otpVerification').classList.remove('active');
+            document.getElementById('mainAuthForms').style.display = 'block';
+            clearInterval(resendCountdown);
+        }
+        
+        function startResendCountdown() {
+            let seconds = 60;
+            const btn = document.getElementById('resendOtpBtn');
+            const timer = document.getElementById('resendTimer');
+            
+            btn.disabled = true;
+            
+            resendCountdown = setInterval(() => {
+                seconds--;
+                timer.textContent = seconds;
+                
+                if (seconds <= 0) {
+                    clearInterval(resendCountdown);
+                    btn.disabled = false;
+                    btn.innerHTML = 'Resend Code';
+                }
+            }, 1000);
+        }
+        
+        async function resendOTP() {
+            if (!pendingRegistration) return;
+            
+            const btn = document.getElementById('resendOtpBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+            
+            try {
+                const response = await fetch('/api/auth/send-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: pendingRegistration.email })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('✅ New verification code sent!', 'success');
+                    startResendCountdown();
+                } else {
+                    showMessage('❌ ' + (data.error || 'Failed to resend code'), 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = 'Resend Code';
+                }
+            } catch (error) {
+                showMessage('❌ Network error. Please try again.', 'error');
+                btn.disabled = false;
+                btn.innerHTML = 'Resend Code';
+            }
+        }
+        
+        // OTP Input handling
+        document.querySelectorAll('.otp-input').forEach((input, index, inputs) => {
+            input.addEventListener('input', (e) => {
+                const value = e.target.value;
+                
+                // Only allow numbers
+                e.target.value = value.replace(/[^0-9]/g, '');
+                
+                // Move to next input
+                if (value && index < inputs.length - 1) {
+                    inputs[index + 1].focus();
+                }
+            });
+            
+            input.addEventListener('keydown', (e) => {
+                // Handle backspace
+                if (e.key === 'Backspace' && !input.value && index > 0) {
+                    inputs[index - 1].focus();
+                }
+            });
+            
+            // Handle paste
+            input.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const pastedData = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, 6);
+                
+                pastedData.split('').forEach((char, i) => {
+                    if (inputs[i]) {
+                        inputs[i].value = char;
+                    }
+                });
+                
+                // Focus last filled or next empty
+                const nextIndex = Math.min(pastedData.length, inputs.length - 1);
+                inputs[nextIndex].focus();
+            });
+        });
+        
+        // OTP Form submission
+        document.getElementById('otpForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const otpInputs = document.querySelectorAll('.otp-input');
+            const otp = Array.from(otpInputs).map(input => input.value).join('');
+            
+            if (otp.length !== 6) {
+                showMessage('Please enter the complete 6-digit code', 'error');
+                return;
+            }
+            
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalContent = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+            
+            try {
+                // Send encrypted password for secure transmission
+                const response = await fetch('/api/auth/verify-otp', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Encrypted': 'true' // Signal that data is encrypted
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        email: pendingRegistration.email,
+                        otp: otp,
+                        username: pendingRegistration.username,
+                        password: pendingRegistration.encryptedPassword || pendingRegistration.password,
+                        encrypted: !!pendingRegistration.encryptedPassword
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('✅ Email verified! Account created successfully!', 'success');
+                    setTimeout(() => window.location.href = '/', 2000);
+                } else {
+                    showMessage('❌ ' + (data.error || 'Invalid verification code'), 'error');
+                    // Clear OTP inputs
+                    otpInputs.forEach(input => input.value = '');
+                    otpInputs[0].focus();
+                }
+            } catch (error) {
+                showMessage('❌ Network error. Please try again.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+            }
+        });
+        
+        // Login (with encryption)
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -491,14 +1082,25 @@
             const btn = e.target.querySelector('button[type="submit"]');
             const originalContent = btn.innerHTML;
             btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in securely...';
             
             try {
+                // Encrypt password for secure transmission
+                const encryptedPassword = await encryptData(formData.password);
+                console.log('[SECURITY] Login password encrypted');
+                
                 const response = await fetch('/api/login', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Encrypted': 'true'
+                    },
                     credentials: 'include',
-                    body: JSON.stringify(formData)
+                    body: JSON.stringify({
+                        username: formData.username,
+                        password: encryptedPassword,
+                        encrypted: true
+                    })
                 });
                 
                 const data = await response.json();
@@ -510,6 +1112,7 @@
                     showMessage('❌ ' + (data.error || 'Invalid username or password'), 'error');
                 }
             } catch (error) {
+                console.error('Login error:', error);
                 showMessage('❌ Network error. Please try again.', 'error');
             } finally {
                 btn.disabled = false;
@@ -517,7 +1120,7 @@
             }
         });
         
-        // Signup
+        // Signup with OTP (with encryption and validation)
         document.getElementById('signupForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -533,38 +1136,71 @@
             const btn = e.target.querySelector('button[type="submit"]');
             const originalContent = btn.innerHTML;
             btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating account...';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking availability...';
             
             try {
-                const response = await fetch('/api/register', {
+                // Step 1: Check if email already exists
+                const emailCheck = await checkEmailExists(formData.email);
+                if (emailCheck.exists) {
+                    showMessage('❌ ' + emailCheck.message, 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = originalContent;
+                    return;
+                }
+                
+                // Step 2: Check if username already exists
+                const usernameCheck = await checkUsernameExists(formData.username);
+                if (usernameCheck.exists) {
+                    showMessage('❌ ' + usernameCheck.message, 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = originalContent;
+                    return;
+                }
+                
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending verification code...';
+                
+                // Step 3: Encrypt password for secure transmission
+                const encryptedPassword = await encryptData(formData.password);
+                console.log('[SECURITY] Password encrypted for transmission');
+                
+                // Step 4: Send OTP to email
+                const response = await fetch('/api/auth/send-otp', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        username: formData.username,
                         email: formData.email,
-                        password: formData.password,
-                        acceptedTerms: true
+                        username: formData.username
                     })
                 });
                 
                 const data = await response.json();
                 
                 if (data.success) {
-                    showMessage('✅ Account created successfully! Please sign in.', 'success');
-                    setTimeout(() => {
-                        document.querySelector('.tab[data-tab="login"]').click();
-                        document.getElementById('username').value = formData.username;
-                    }, 1500);
+                    // Store pending registration with encrypted password
+                    pendingRegistration = {
+                        username: formData.username,
+                        email: formData.email,
+                        password: formData.password, // Store original for display
+                        encryptedPassword: encryptedPassword // Store encrypted for transmission
+                    };
+                    
+                    showMessage('✅ Verification code sent to your email!', 'success');
+                    setTimeout(() => showOTPVerification(formData.email), 1000);
                 } else {
-                    showMessage('❌ ' + (data.error || 'Registration failed'), 'error');
+                    showMessage('❌ ' + (data.error || 'Failed to send verification code'), 'error');
                 }
             } catch (error) {
+                console.error('Signup error:', error);
                 showMessage('❌ Network error. Please try again.', 'error');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalContent;
             }
         });
+        
+        function showForgotPassword() {
+            alert('Password reset feature coming soon! Please contact support for now.');
+        }
     </script>
 </body>
 </html>

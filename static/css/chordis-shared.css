@@ -11,31 +11,31 @@
 }
 
 :root {
-    /* Brand Colors */
-    --primary-500: #7c3aed;
-    --primary-600: #6d28d9;
-    --primary-700: #5b21b6;
-    --pink-500: #ec4899;
-    --pink-600: #db2777;
+    /* Brand Colors - Blue Theme */
+    --primary-500: #3b82f6;
+    --primary-600: #2563eb;
+    --primary-700: #1d4ed8;
+    --pink-500: #60a5fa;
+    --pink-600: #3b82f6;
     --orange-500: #f59e0b;
     
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
-    --gradient-secondary: linear-gradient(135deg, #7c3aed 0%, #ec4899 50%, #f59e0b 100%);
-    --gradient-dark: linear-gradient(180deg, #0f0f23 0%, #1a1a2e 100%);
+    /* Gradients - Blue Theme */
+    --gradient-primary: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    --gradient-secondary: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 50%, #60a5fa 100%);
+    --gradient-dark: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
     
     /* Background */
-    --bg-primary: #0f0f23;
-    --bg-secondary: #1a1a2e;
-    --bg-elevated: #16213e;
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-elevated: #1e3a5f;
     --bg-overlay: rgba(255, 255, 255, 0.05);
     --bg-overlay-hover: rgba(255, 255, 255, 0.08);
     --bg-glass: rgba(255, 255, 255, 0.03);
     
     /* Borders */
     --border-color: rgba(255, 255, 255, 0.1);
-    --border-color-hover: rgba(124, 58, 237, 0.4);
-    --border-color-focus: rgba(124, 58, 237, 0.6);
+    --border-color-hover: rgba(59, 130, 246, 0.4);
+    --border-color-focus: rgba(59, 130, 246, 0.6);
     
     /* Text */
     --text-primary: #ffffff;
@@ -53,13 +53,13 @@
     --info: #3b82f6;
     --info-bg: rgba(59, 130, 246, 0.1);
     
-    /* Shadows */
+    /* Shadows - Blue Theme */
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
     --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.2);
     --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.3);
     --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.4);
-    --shadow-button: 0 4px 15px rgba(124, 58, 237, 0.4);
-    --shadow-button-hover: 0 8px 24px rgba(124, 58, 237, 0.5);
+    --shadow-button: 0 4px 15px rgba(59, 130, 246, 0.4);
+    --shadow-button-hover: 0 8px 24px rgba(59, 130, 246, 0.5);
     
     /* Radius */
     --radius-sm: 8px;
@@ -108,7 +108,7 @@ body {
     overflow-x: hidden;
 }
 
-/* Animated gradient background */
+/* Animated gradient background - Blue Theme */
 body::before {
     content: '';
     position: fixed;
@@ -117,9 +117,9 @@ body::before {
     width: 100%;
     height: 100%;
     background: 
-        radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.25), transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(255, 100, 255, 0.25), transparent 50%),
-        radial-gradient(circle at 40% 20%, rgba(67, 233, 123, 0.15), transparent 50%);
+        radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.2), transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(29, 78, 216, 0.2), transparent 50%),
+        radial-gradient(circle at 40% 20%, rgba(96, 165, 250, 0.15), transparent 50%);
     animation: float 20s ease-in-out infinite;
     z-index: 0;
     pointer-events: none;
@@ -142,8 +142,7 @@ nav {
     top: 0;
     left: 0;
     right: 0;
-    background: rgba(15, 15, 35, 0.95);
-    backdrop-filter: blur(20px) saturate(180%);
+    background: rgba(15, 15, 35, 0.98);
     border-bottom: 1px solid var(--border-color);
     padding: var(--space-4) var(--space-8);
     z-index: var(--z-sticky);
@@ -373,7 +372,6 @@ nav.scrolled {
 /* === CARDS === */
 .card {
     background: var(--bg-overlay);
-    backdrop-filter: blur(20px) saturate(180%);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-2xl);
     padding: var(--space-8);
@@ -474,7 +472,7 @@ select:focus {
     outline: none;
     border-color: var(--border-color-focus);
     background: var(--bg-overlay-hover);
-    box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.15);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
 }
 
 input::placeholder,
@@ -842,5 +840,385 @@ textarea::placeholder {
     
     .btn {
         -webkit-tap-highlight-color: transparent;
+    }
+}
+
+/* ============================================
+   INTEGRATED SHEET VIEW STYLES
+   Chords positioned above lyrics for any instrument
+   ============================================ */
+
+/* View Toggle Buttons */
+.view-toggle-container {
+    display: flex;
+    gap: var(--space-2);
+    background: var(--bg-overlay);
+    padding: var(--space-2);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-6);
+    align-items: center;
+    justify-content: center;
+}
+
+.view-toggle-btn {
+    flex: 1;
+    padding: var(--space-3) var(--space-5);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.9375rem;
+    cursor: pointer;
+    transition: all var(--transition-base);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-width: 140px;
+}
+
+.view-toggle-btn:hover {
+    background: var(--bg-overlay);
+    color: var(--text-secondary);
+    border-color: var(--border-color-hover);
+}
+
+.view-toggle-btn.active {
+    background: var(--gradient-primary);
+    color: var(--text-primary);
+    border-color: transparent;
+    box-shadow: var(--shadow-button);
+}
+
+.view-toggle-btn i {
+    font-size: 1.125rem;
+}
+
+/* Integrated Sheet View Container - Matches main app sections */
+.integrated-sheet-view {
+    background: transparent;
+    padding: 0;
+    animation: fadeIn var(--transition-base);
+}
+
+/* Wrapper for integrated view to match section styling */
+#integrated-view-container {
+    margin-bottom: 1.5rem;
+}
+
+/* Sheet Header - Simplified to match existing sections */
+.sheet-header {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.sheet-song-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.5rem;
+}
+
+.sheet-artist {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.sheet-meta {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.sheet-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.sheet-meta-item i {
+    color: #3b82f6;
+}
+
+.toggle-diagrams-btn {
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    background: rgba(59, 130, 246, 0.2);
+    border: 2px solid rgba(59, 130, 246, 0.3);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+}
+
+.toggle-diagrams-btn:hover {
+    background: rgba(59, 130, 246, 0.4);
+    border-color: rgba(59, 130, 246, 0.5);
+    transform: translateY(-2px);
+}
+
+/* Chord Diagrams Section - Match existing chords grid */
+.sheet-chord-diagrams {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 1.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 16px;
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sheet-chord-diagrams.hidden {
+    display: none;
+}
+
+.chord-diagram {
+    text-align: center;
+    padding: 0.75rem 1rem;
+    background: rgba(59, 130, 246, 0.2);
+    border: 2px solid rgba(59, 130, 246, 0.3);
+    border-radius: 12px;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.chord-diagram:hover {
+    background: rgba(59, 130, 246, 0.4);
+    transform: translateY(-2px);
+}
+
+.chord-diagram-name {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #1d4ed8;
+    margin-bottom: 0.5rem;
+}
+
+.chord-diagram-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    gap: 2px;
+    width: 60px;
+    height: 50px;
+    margin: 0 auto var(--space-2);
+    background: var(--border-color);
+    border-radius: 4px;
+    padding: 2px;
+    position: relative;
+}
+
+.chord-diagram-dot {
+    background: var(--primary-500);
+    border-radius: 50%;
+    width: 8px;
+    height: 8px;
+    margin: auto;
+}
+
+/* Lyrics with Chords - Match existing lyrics section */
+.sheet-lyrics {
+    font-family: 'Courier New', Consolas, monospace;
+    font-size: 0.9375rem;
+    line-height: 2.5;
+    padding: 1.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.sheet-section {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #3b82f6;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 1.5rem 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid rgba(59, 130, 246, 0.3);
+}
+
+.sheet-section:first-child {
+    margin-top: 0;
+}
+
+.sheet-line {
+    margin-bottom: 1.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.sheet-line:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.sheet-line.active {
+    background: linear-gradient(to right, rgba(59, 130, 246, 0.3), transparent);
+    border-left: 4px solid #3b82f6;
+    padding-left: 1rem;
+}
+
+.sheet-chords-row {
+    font-weight: 700;
+    color: #1d4ed8;
+    font-size: 1rem;
+    line-height: 1.5;
+    min-height: 1.5em;
+    white-space: pre;
+    margin-bottom: 0.25rem;
+    display: block;
+}
+
+.chord-inline {
+    display: inline-block;
+    color: #1d4ed8;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: all 0.3s;
+    position: relative;
+    background: rgba(236, 72, 153, 0.1);
+}
+
+.chord-inline:hover {
+    background: rgba(236, 72, 153, 0.2);
+    transform: scale(1.05);
+}
+
+.chord-inline.active {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: white;
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.5);
+    animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.9;
+    }
+}
+
+.chord-spacer {
+    display: inline;
+    white-space: pre;
+}
+
+.sheet-lyrics-row {
+    font-size: 0.9375rem;
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.8;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.sheet-line.active .sheet-lyrics-row {
+    color: white;
+    font-weight: 600;
+}
+
+/* Responsive Adjustments for Sheet View */
+@media (max-width: 768px) {
+    .integrated-sheet-view {
+        padding: 0;
+    }
+    
+    .sheet-header {
+        padding: 1rem;
+    }
+    
+    .sheet-song-title {
+        font-size: 1.25rem;
+    }
+    
+    .sheet-artist {
+        font-size: 0.875rem;
+    }
+    
+    .sheet-meta {
+        gap: 1rem;
+        font-size: 0.8125rem;
+    }
+    
+    .sheet-chord-diagrams {
+        gap: 0.5rem;
+        padding: 1rem;
+    }
+    
+    .chord-diagram {
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .sheet-lyrics {
+        font-size: 0.875rem;
+        padding: 1rem;
+        line-height: 2.2;
+    }
+    
+    .sheet-chords-row {
+        font-size: 0.875rem;
+    }
+    
+    .sheet-line {
+        padding: 0.5rem;
+        margin-bottom: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .sheet-header {
+        padding: 0.75rem;
+    }
+    
+    .sheet-song-title {
+        font-size: 1.125rem;
+    }
+    
+    .sheet-lyrics {
+        font-size: 0.8125rem;
+        line-height: 2;
+        max-height: 400px;
+        padding: 0.75rem;
+    }
+    
+    .sheet-chords-row {
+        font-size: 0.8125rem;
+    }
+    
+    .sheet-chord-diagrams {
+        gap: 0.5rem;
+        padding: 0.75rem;
+    }
+    
+    .chord-diagram {
+        padding: 0.5rem;
+        font-size: 0.875rem;
     }
 }

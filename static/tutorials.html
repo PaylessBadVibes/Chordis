@@ -6,7 +6,7 @@
     <title>Music Corner | Chordis</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/chordis-shared.css?v=2.0">
+    <link rel="stylesheet" href="/css/chordis-shared.css?v=3.0">
     <style>
         .page-header {
             text-align: center;
@@ -144,7 +144,7 @@
         }
         
         .badge-interactive {
-            background: rgba(124, 58, 237, 0.15);
+            background: rgba(59, 130, 246, 0.15);
             color: var(--primary-500);
         }
         
@@ -337,10 +337,9 @@
             </a>
             <div class="nav-links">
                 <a href="/">Home</a>
-                <a href="/#features">Features</a>
                 <a href="/chordai">ChordAI</a>
                 <a href="/realtime">Music Recognizer</a>
-                <a href="/library">Library</a>
+                <a href="/library" id="navLibraryLink" style="display: none;">Library</a>
                 <a href="/tutorials" class="active">Tutorials</a>
                 <a href="/analytics">Analytics</a>
             </div>
@@ -446,6 +445,10 @@
                         document.getElementById('auth-buttons').style.display = 'none';
                         document.getElementById('user-menu').style.display = 'flex';
                         document.getElementById('username-display').textContent = data.user.username;
+                        
+                        // Show Library link when logged in
+                        const navLibraryLink = document.getElementById('navLibraryLink');
+                        if (navLibraryLink) navLibraryLink.style.display = '';
                     }
                 }
             } catch (error) {

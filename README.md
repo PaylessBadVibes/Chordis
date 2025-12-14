@@ -2,6 +2,14 @@
 
 AI-powered music analysis tool that extracts chords and lyrics from any song using deep learning.
 
+## 📖 Documentation
+
+- **[Introduction](INTRODUCTION.md)** - Learn what Chordis is and what it can do for you
+- **[Beginner's Guide](BEGINNER_GUIDE.md)** - Complete step-by-step guide for using all features
+- **[README](README.md)** - Technical setup and deployment instructions (you are here)
+
+**New to Chordis?** Start with the [Introduction](INTRODUCTION.md) to understand the system, then follow the [Beginner's Guide](BEGINNER_GUIDE.md) for detailed usage instructions.
+
 ## Features
 
 - 🔍 **Search Songs** - Find any song and get instant chords & lyrics
@@ -69,10 +77,19 @@ Railway will automatically:
 
 MIT License - Feel free to use for your projects!
 
+## Documentation
+
+For detailed information:
+- **[Introduction](INTRODUCTION.md)** - System overview, capabilities, and use cases
+- **[Beginner's Guide](BEGINNER_GUIDE.md)** - Complete user guide with troubleshooting and FAQs
+
 ## Support
 
 Found a bug? Please report it!
 Want to contribute? Pull requests welcome!
+
+For end-user help, see the [Beginner's Guide](BEGINNER_GUIDE.md).
+For developer questions, check the technical documentation above.
 
 
 

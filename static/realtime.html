@@ -6,7 +6,7 @@
     <title>Music Recognizer | Chordis</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/chordis-shared.css?v=2.0">
+    <link rel="stylesheet" href="/css/chordis-shared.css?v=3.0">
     <style>
         .realtime-container {
             min-height: 100vh;
@@ -53,7 +53,7 @@
             font-size: 6rem;
             cursor: pointer;
             transition: all var(--transition-base);
-            box-shadow: 0 12px 48px rgba(124, 58, 237, 0.5);
+            box-shadow: 0 12px 48px rgba(59, 130, 246, 0.5);
             position: relative;
             overflow: hidden;
             display: flex;
@@ -79,7 +79,7 @@
         
         .mic-btn:hover {
             transform: scale(1.05);
-            box-shadow: 0 16px 64px rgba(124, 58, 237, 0.7);
+            box-shadow: 0 16px 64px rgba(59, 130, 246, 0.7);
         }
         
         .mic-btn.listening {
@@ -242,7 +242,7 @@
             background: var(--gradient-primary);
             transition: width 0.5s ease;
             border-radius: var(--radius-full);
-            box-shadow: 0 0 16px rgba(124, 58, 237, 0.5);
+            box-shadow: 0 0 16px rgba(59, 130, 246, 0.5);
         }
         
         .result-actions {
@@ -438,6 +438,143 @@
             }
         }
         
+        /* Live Chord Display */
+        .live-chord-container {
+            display: none;
+            margin: var(--space-6) 0;
+            padding: var(--space-6);
+            background: var(--bg-overlay);
+            border: 2px solid var(--primary-500);
+            border-radius: var(--radius-2xl);
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        .live-chord-container.active {
+            display: block;
+        }
+        
+        .live-chord-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-4);
+        }
+        
+        .live-chord-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+        
+        .live-chord-title i {
+            color: var(--primary-500);
+        }
+        
+        .volume-indicator {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+        
+        .volume-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 20px;
+        }
+        
+        .volume-bar {
+            width: 4px;
+            background: var(--primary-500);
+            border-radius: 2px;
+            transition: height 0.1s ease;
+        }
+        
+        .current-chord-display {
+            text-align: center;
+            padding: var(--space-6);
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%);
+            border-radius: var(--radius-xl);
+            margin-bottom: var(--space-4);
+        }
+        
+        .current-chord {
+            font-size: 4rem;
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.2;
+            min-height: 5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .current-chord.empty {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            -webkit-text-fill-color: var(--text-muted);
+            background: none;
+        }
+        
+        .detected-notes {
+            font-size: 0.9375rem;
+            color: var(--text-secondary);
+            margin-top: var(--space-2);
+        }
+        
+        .chord-history {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-2);
+            justify-content: center;
+        }
+        
+        .chord-history-item {
+            padding: var(--space-2) var(--space-4);
+            background: var(--bg-overlay);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            font-weight: 600;
+            font-size: 0.9375rem;
+            color: var(--text-primary);
+            transition: all 0.2s;
+        }
+        
+        .chord-history-item:first-child {
+            background: var(--gradient-primary);
+            color: white;
+            border-color: transparent;
+            transform: scale(1.1);
+        }
+        
+        .chord-history-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-bottom: var(--space-3);
+            text-align: center;
+        }
+        
+        .no-sound-message {
+            text-align: center;
+            padding: var(--space-4);
+            color: var(--text-muted);
+            font-size: 0.9375rem;
+        }
+        
+        .no-sound-message i {
+            font-size: 2rem;
+            margin-bottom: var(--space-2);
+            display: block;
+        }
+
         /* File Upload Styles */
         .recognition-methods {
             display: grid;
@@ -543,7 +680,7 @@
 
         .browse-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(124, 58, 237, 0.4);
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
         }
 
         .file-selected {
@@ -653,10 +790,9 @@
             </a>
             <div class="nav-links">
                 <a href="/">Home</a>
-                <a href="/#features">Features</a>
                 <a href="/chordai">ChordAI</a>
                 <a href="/realtime" class="active">Music Recognizer</a>
-                <a href="/library">Library</a>
+                <a href="/library" id="navLibraryLink" style="display: none;">Library</a>
                 <a href="/tutorials">Tutorials</a>
                 <a href="/analytics">Analytics</a>
             </div>
@@ -686,7 +822,7 @@
         <div class="realtime-card">
             <div class="page-header">
                 <h1><i class="fas fa-microphone"></i> Music Recognizer</h1>
-                <p>Identify music playing around you instantly</p>
+                <p>Detect chords from your instrument or identify songs instantly</p>
             </div>
             
             <div class="card">
@@ -700,13 +836,16 @@
                     <!-- Microphone Section -->
                     <div class="method-section">
                         <div class="method-title">
-                            <i class="fas fa-microphone"></i> Live Recognition
+                            <i class="fas fa-guitar"></i> Live Chord Detection
                         </div>
                         <div class="mic-container">
                             <button class="mic-btn" id="micBtn">
                                 <i class="fas fa-microphone"></i>
                             </button>
                         </div>
+                        <p style="text-align: center; color: var(--text-muted); font-size: 0.875rem; margin-top: var(--space-2);">
+                            Click to start detecting chords from your instrument
+                        </p>
                     </div>
                     
                     <div class="or-divider">
@@ -738,6 +877,53 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <div class="or-divider">
+                        <span>OR</span>
+                    </div>
+                    
+                    <!-- URL Input Section -->
+                    <div class="method-section">
+                        <div class="method-title">
+                            <i class="fas fa-link"></i> Paste Link from Social Media
+                        </div>
+                        <div style="padding: var(--space-4); background: var(--bg-overlay); border-radius: var(--radius-xl); border: 1px solid var(--border-color);">
+                            <div style="display: flex; gap: var(--space-2); margin-bottom: var(--space-4); flex-wrap: wrap; justify-content: center;">
+                                <span style="padding: var(--space-2) var(--space-3); background: rgba(255, 0, 0, 0.1); border-radius: var(--radius-md); font-size: 0.875rem; color: #ff0000;">
+                                    <i class="fab fa-youtube"></i> YouTube
+                                </span>
+                                <span style="padding: var(--space-2) var(--space-3); background: rgba(0, 0, 0, 0.2); border-radius: var(--radius-md); font-size: 0.875rem;">
+                                    <i class="fab fa-tiktok"></i> TikTok
+                                </span>
+                                <span style="padding: var(--space-2) var(--space-3); background: rgba(59, 89, 152, 0.1); border-radius: var(--radius-md); font-size: 0.875rem; color: #3b5998;">
+                                    <i class="fab fa-facebook"></i> Facebook
+                                </span>
+                                <span style="padding: var(--space-2) var(--space-3); background: rgba(225, 48, 108, 0.1); border-radius: var(--radius-md); font-size: 0.875rem; color: #e1306c;">
+                                    <i class="fab fa-instagram"></i> Instagram
+                                </span>
+                                <span style="padding: var(--space-2) var(--space-3); background: rgba(255, 85, 0, 0.1); border-radius: var(--radius-md); font-size: 0.875rem; color: #ff5500;">
+                                    <i class="fab fa-soundcloud"></i> SoundCloud
+                                </span>
+                            </div>
+                            
+                            <div style="position: relative; margin-bottom: var(--space-4);">
+                                <i class="fas fa-link" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 1.125rem;"></i>
+                                <input type="url" id="urlInput" placeholder="Paste video or audio link here..." 
+                                       style="width: 100%; padding: 1rem 1rem 1rem 3rem; background: rgba(255, 255, 255, 0.05); border: 2px solid var(--border-color); border-radius: var(--radius-lg); color: white; font-size: 1rem; transition: all 0.3s;"
+                                       onfocus="this.style.borderColor='var(--primary-500)'"
+                                       onblur="this.style.borderColor='var(--border-color)'">
+                            </div>
+                            
+                            <button class="btn btn-primary" onclick="recognizeFromUrl()" id="urlRecognizeBtn" 
+                                    style="width: 100%; padding: var(--space-4); font-size: 1.125rem; font-weight: 700; border-radius: var(--radius-lg); background: var(--gradient-primary); border: none; color: white; cursor: pointer; transition: all 0.3s;">
+                                <i class="fas fa-search"></i> Recognize from Link
+                            </button>
+                            
+                            <div style="margin-top: var(--space-4); padding: var(--space-3); background: rgba(59, 130, 246, 0.1); border-radius: var(--radius-md); font-size: 0.875rem; color: var(--text-secondary);">
+                                <i class="fas fa-info-circle"></i> Supports video and audio files from multiple platforms
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="status-display">
@@ -745,6 +931,41 @@
                     <div class="status-indicator status-idle" id="statusIndicator">
                         <i class="fas fa-circle"></i>
                         Ready
+                    </div>
+                </div>
+                
+                <!-- Live Chord Detection Display -->
+                <div class="live-chord-container" id="liveChordContainer">
+                    <div class="live-chord-header">
+                        <div class="live-chord-title">
+                            <i class="fas fa-guitar"></i>
+                            Live Chord Detection
+                        </div>
+                        <div class="volume-indicator">
+                            <span>Volume:</span>
+                            <div class="volume-bars" id="volumeBars">
+                                <div class="volume-bar" style="height: 4px;"></div>
+                                <div class="volume-bar" style="height: 4px;"></div>
+                                <div class="volume-bar" style="height: 4px;"></div>
+                                <div class="volume-bar" style="height: 4px;"></div>
+                                <div class="volume-bar" style="height: 4px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="current-chord-display">
+                        <div class="current-chord empty" id="currentChord">
+                            Play an instrument...
+                        </div>
+                        <div class="detected-notes" id="detectedNotes"></div>
+                    </div>
+                    
+                    <div class="chord-history-label">Recent Chords:</div>
+                    <div class="chord-history" id="chordHistory">
+                        <div class="no-sound-message" id="noSoundMessage">
+                            <i class="fas fa-music"></i>
+                            Play your instrument near the microphone to detect chords
+                        </div>
                     </div>
                 </div>
                 
@@ -779,31 +1000,35 @@
                 
                 <div class="features-grid">
                     <div class="feature-card">
-                        <i class="fas fa-bolt feature-icon"></i>
-                        <div class="feature-title">Real Recognition</div>
-                        <div class="feature-description">Powered by ACRCloud - recognize real songs from your audio files</div>
+                        <i class="fas fa-guitar feature-icon"></i>
+                        <div class="feature-title">Live Chord Detection</div>
+                        <div class="feature-description">Play your guitar, piano, or any instrument and see chords detected in real-time</div>
                     </div>
                     
                     <div class="feature-card">
-                        <i class="fas fa-database feature-icon"></i>
-                        <div class="feature-title">Massive Database</div>
-                        <div class="feature-description">Access to millions of songs in ACRCloud's global database</div>
+                        <i class="fas fa-music feature-icon"></i>
+                        <div class="feature-title">Song Recognition</div>
+                        <div class="feature-description">Upload audio or paste a link to instantly identify any song</div>
                     </div>
                     
                     <div class="feature-card">
-                        <i class="fas fa-bullseye feature-icon"></i>
-                        <div class="feature-title">High Accuracy</div>
-                        <div class="feature-description">Advanced audio fingerprinting for precise song identification</div>
+                        <i class="fas fa-microphone feature-icon"></i>
+                        <div class="feature-title">Real-Time Analysis</div>
+                        <div class="feature-description">FFT-based frequency analysis detects notes and builds chords instantly</div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     
+    <!-- Real-time Chord Recognition Script -->
+    <script src="/js/realtime-recognition.js"></script>
+    
     <script>
         let isListening = false;
         let currentResult = null;
         let selectedFile = null;
+        let chordRecognizer = null;
         
         async function checkAuth() {
             try {
@@ -814,6 +1039,10 @@
                         document.getElementById('auth-buttons').style.display = 'none';
                         document.getElementById('user-menu').style.display = 'flex';
                         document.getElementById('username-display').textContent = data.user.username;
+                        
+                        // Show Library link when logged in
+                        const navLibraryLink = document.getElementById('navLibraryLink');
+                        if (navLibraryLink) navLibraryLink.style.display = '';
                     }
                 }
             } catch (error) {
@@ -847,31 +1076,129 @@
             }
         }
         
-        function startListening() {
-            isListening = true;
-            document.getElementById('micBtn').classList.add('listening');
-            updateStatus('listening', 'Listening for music... Play something!', '🎤 Listening');
-            
-            // Demo mode - simulate recognition
-            setTimeout(() => {
-                if (isListening) {
-                    const demoResults = [
-                        { title: "Bohemian Rhapsody", artist: "Queen", confidence: 95 },
-                        { title: "Hotel California", artist: "Eagles", confidence: 92 },
-                        { title: "Stairway to Heaven", artist: "Led Zeppelin", confidence: 88 },
-                        { title: "Sweet Child O' Mine", artist: "Guns N' Roses", confidence: 90 }
-                    ];
-                    
-                    const randomResult = demoResults[Math.floor(Math.random() * demoResults.length)];
-                    processResult(randomResult);
+        async function startListening() {
+            try {
+                // Initialize chord recognizer if not already
+                if (!chordRecognizer) {
+                    chordRecognizer = new RealtimeChordRecognition();
                 }
-            }, 3500);
+                
+                // Set up callbacks for chord detection
+                chordRecognizer.onChordDetected = (chord, notes) => {
+                    updateChordDisplay(chord, notes);
+                };
+                
+                chordRecognizer.onVolumeChange = (volume) => {
+                    updateVolumeIndicator(volume);
+                };
+                
+                // Start listening
+                await chordRecognizer.startListening();
+                
+                isListening = true;
+                document.getElementById('micBtn').classList.add('listening');
+                document.getElementById('liveChordContainer').classList.add('active');
+                updateStatus('listening', '🎸 Listening... Play your instrument!', '🎤 Listening');
+                
+                console.log('[REALTIME] Started chord detection');
+                
+            } catch (error) {
+                console.error('Failed to start listening:', error);
+                document.getElementById('permissionBanner').classList.add('show');
+                updateStatus('idle', 'Microphone access denied. Please allow permission.', '❌ Error');
+            }
         }
         
         function stopListening() {
+            if (chordRecognizer) {
+                chordRecognizer.stopListening();
+            }
+            
             isListening = false;
             document.getElementById('micBtn').classList.remove('listening');
+            document.getElementById('liveChordContainer').classList.remove('active');
             updateStatus('idle', 'Choose a recognition method above', 'Ready');
+            
+            // Reset displays
+            document.getElementById('currentChord').textContent = 'Play an instrument...';
+            document.getElementById('currentChord').classList.add('empty');
+            document.getElementById('detectedNotes').textContent = '';
+            document.getElementById('chordHistory').innerHTML = `
+                <div class="no-sound-message" id="noSoundMessage">
+                    <i class="fas fa-music"></i>
+                    Play your instrument near the microphone to detect chords
+                </div>
+            `;
+            
+            console.log('[REALTIME] Stopped chord detection');
+        }
+        
+        function updateChordDisplay(chord, notes) {
+            const chordDisplay = document.getElementById('currentChord');
+            const notesDisplay = document.getElementById('detectedNotes');
+            const historyContainer = document.getElementById('chordHistory');
+            const noSoundMessage = document.getElementById('noSoundMessage');
+            
+            // Update current chord
+            if (chord) {
+                chordDisplay.textContent = chord;
+                chordDisplay.classList.remove('empty');
+                
+                // Show detected notes
+                if (notes && notes.length > 0) {
+                    const noteNames = notes.map(n => n.note).join(' - ');
+                    notesDisplay.textContent = `Notes: ${noteNames}`;
+                }
+                
+                // Hide no sound message
+                if (noSoundMessage) {
+                    noSoundMessage.style.display = 'none';
+                }
+                
+                // Update chord history
+                updateChordHistory(chord);
+            }
+        }
+        
+        function updateChordHistory(chord) {
+            const historyContainer = document.getElementById('chordHistory');
+            
+            // Get existing history items
+            const existingItems = historyContainer.querySelectorAll('.chord-history-item');
+            const chords = Array.from(existingItems).map(item => item.textContent);
+            
+            // Add new chord if different from the last one
+            if (chords.length === 0 || chords[0] !== chord) {
+                // Create new item
+                const newItem = document.createElement('div');
+                newItem.className = 'chord-history-item';
+                newItem.textContent = chord;
+                
+                // Insert at the beginning
+                if (historyContainer.firstChild) {
+                    historyContainer.insertBefore(newItem, historyContainer.firstChild);
+                } else {
+                    historyContainer.appendChild(newItem);
+                }
+                
+                // Remove old items if more than 10
+                const allItems = historyContainer.querySelectorAll('.chord-history-item');
+                if (allItems.length > 10) {
+                    allItems[allItems.length - 1].remove();
+                }
+            }
+        }
+        
+        function updateVolumeIndicator(volume) {
+            const bars = document.querySelectorAll('#volumeBars .volume-bar');
+            const normalizedVolume = Math.min(volume * 10, 1); // Normalize to 0-1
+            
+            bars.forEach((bar, index) => {
+                const threshold = (index + 1) / bars.length;
+                const height = normalizedVolume >= threshold ? 4 + (index + 1) * 3 : 4;
+                bar.style.height = `${height}px`;
+                bar.style.background = normalizedVolume >= threshold ? 'var(--primary-500)' : 'var(--border-color)';
+            });
         }
         
         function processResult(result) {
@@ -990,7 +1317,7 @@
         progressFill.style.width = '0%';
         progressText.textContent = 'Uploading...';
         
-        updateStatus('processing', 'Uploading and recognizing with ACRCloud...', '⚙️ Processing');
+        updateStatus('processing', 'Uploading and identifying song...', '⚙️ Processing');
         
         // Hide previous results
         document.getElementById('resultContainer').style.display = 'none';
@@ -1057,6 +1384,79 @@
             progressFill.style.width = '0%';
             fileInput.value = '';
             selectedFile = null;
+        }
+        
+        // ========== URL RECOGNITION ==========
+        
+        async function recognizeFromUrl() {
+            const urlInput = document.getElementById('urlInput');
+            const url = urlInput.value.trim();
+            
+            if (!url) {
+                updateStatus('idle', 'Please paste a URL first', '❌ Error');
+                return;
+            }
+            
+            // Validate URL format
+            try {
+                new URL(url);
+            } catch (e) {
+                updateStatus('idle', 'Invalid URL format. Please paste a valid link.', '❌ Error');
+                return;
+            }
+            
+            // Detect platform
+            let platform = 'unknown';
+            if (url.includes('youtube.com') || url.includes('youtu.be')) {
+                platform = 'YouTube';
+            } else if (url.includes('tiktok.com')) {
+                platform = 'TikTok';
+            } else if (url.includes('facebook.com') || url.includes('fb.watch')) {
+                platform = 'Facebook';
+            } else if (url.includes('instagram.com')) {
+                platform = 'Instagram';
+            } else if (url.includes('soundcloud.com')) {
+                platform = 'SoundCloud';
+            }
+            
+            console.log(`Recognizing from ${platform}: ${url}`);
+            
+            // Show processing state
+            updateStatus('processing', `Downloading audio from ${platform}...`, '⚙️ Processing');
+            
+            // Hide previous results
+            document.getElementById('resultContainer').style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/recognize-song', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ url: url })
+                });
+                
+                console.log('Response status:', response.status);
+                const data = await response.json();
+                console.log('Response data:', data);
+                
+                if (data.success && data.song) {
+                    // Show result
+                    const result = {
+                        title: data.song.title,
+                        artist: data.song.artist,
+                        confidence: data.song.confidence || data.song.score || 90
+                    };
+                    console.log('Showing result:', result);
+                    showResult(result);
+                } else {
+                    const errorMsg = data.error || `Could not recognize song from ${platform} link`;
+                    console.error('Recognition failed:', errorMsg);
+                    updateStatus('idle', errorMsg, '❌ Error');
+                }
+            } catch (error) {
+                console.error('URL recognition error:', error);
+                updateStatus('idle', 'Network error. Please check if server is running.', '❌ Error');
+            }
         }
         
         // ========== RESULT ACTIONS ==========

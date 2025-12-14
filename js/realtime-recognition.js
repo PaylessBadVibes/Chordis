@@ -1,11 +1,11 @@
 /**
  * Real-time Audio Recognition
- * Detects chords and identifies songs using microphone input
+ * Detects chords from live instrument input using microphone
+ * Uses FFT analysis to identify musical notes and determine chords
  */
 
-class RealtimeRecognition {
-    constructor(chordisApp) {
-        this.app = chordisApp;
+class RealtimeChordRecognition {
+    constructor() {
         this.isListening = false;
         this.audioContext = null;
         this.analyser = null;
@@ -14,45 +14,86 @@ class RealtimeRecognition {
         this.detectedChords = [];
         this.chordHistory = [];
         this.lastChordTime = 0;
-        this.audioBuffer = [];
+        this.lastChord = null;
+        this.onChordDetected = null; // Callback for chord detection
+        this.onVolumeChange = null; // Callback for volume visualization
+        
+        // Musical note frequencies (A4 = 440Hz standard tuning)
+        this.NOTE_FREQUENCIES = {
+            'C2': 65.41, 'C#2': 69.30, 'D2': 73.42, 'D#2': 77.78, 'E2': 82.41, 'F2': 87.31,
+            'F#2': 92.50, 'G2': 98.00, 'G#2': 103.83, 'A2': 110.00, 'A#2': 116.54, 'B2': 123.47,
+            'C3': 130.81, 'C#3': 138.59, 'D3': 146.83, 'D#3': 155.56, 'E3': 164.81, 'F3': 174.61,
+            'F#3': 185.00, 'G3': 196.00, 'G#3': 207.65, 'A3': 220.00, 'A#3': 233.08, 'B3': 246.94,
+            'C4': 261.63, 'C#4': 277.18, 'D4': 293.66, 'D#4': 311.13, 'E4': 329.63, 'F4': 349.23,
+            'F#4': 369.99, 'G4': 392.00, 'G#4': 415.30, 'A4': 440.00, 'A#4': 466.16, 'B4': 493.88,
+            'C5': 523.25, 'C#5': 554.37, 'D5': 587.33, 'D#5': 622.25, 'E5': 659.25, 'F5': 698.46,
+            'F#5': 739.99, 'G5': 783.99, 'G#5': 830.61, 'A5': 880.00, 'A#5': 932.33, 'B5': 987.77,
+            'C6': 1046.50
+        };
+        
+        // Note names for chord building
+        this.NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+        
+        // Chord templates (intervals in semitones from root)
+        this.CHORD_TEMPLATES = {
+            'maj': [0, 4, 7],           // Major triad
+            'm': [0, 3, 7],             // Minor triad
+            '7': [0, 4, 7, 10],         // Dominant 7th
+            'maj7': [0, 4, 7, 11],      // Major 7th
+            'm7': [0, 3, 7, 10],        // Minor 7th
+            'dim': [0, 3, 6],           // Diminished
+            'aug': [0, 4, 8],           // Augmented
+            'sus4': [0, 5, 7],          // Suspended 4th
+            'sus2': [0, 2, 7],          // Suspended 2nd
+            'add9': [0, 4, 7, 14],      // Add 9
+            '6': [0, 4, 7, 9],          // Major 6th
+            'm6': [0, 3, 7, 9],         // Minor 6th
+        };
     }
 
     async startListening() {
         if (this.isListening) return;
 
         try {
-            // Request microphone access
+            // Request microphone access with optimized settings for instruments
             const stream = await navigator.mediaDevices.getUserMedia({ 
                 audio: {
-                    echoCancellation: true,
-                    noiseSuppression: true,
-                    autoGainControl: true
+                    echoCancellation: false,  // Disable for cleaner instrument sound
+                    noiseSuppression: false,  // Disable for better frequency detection
+                    autoGainControl: false,   // Disable for consistent levels
+                    sampleRate: 44100         // Standard audio sample rate
                 } 
             });
 
             // Create audio context
-            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)({
+                sampleRate: 44100
+            });
+            
             this.analyser = this.audioContext.createAnalyser();
             this.microphone = this.audioContext.createMediaStreamSource(stream);
 
-            // Configure analyser
-            this.analyser.fftSize = 2048;
+            // Configure analyser for better frequency resolution
+            this.analyser.fftSize = 8192;  // Higher = better frequency resolution
             this.analyser.smoothingTimeConstant = 0.8;
+            this.analyser.minDecibels = -90;
+            this.analyser.maxDecibels = -10;
+            
             this.microphone.connect(this.analyser);
 
             const bufferLength = this.analyser.frequencyBinCount;
-            this.dataArray = new Uint8Array(bufferLength);
+            this.dataArray = new Float32Array(bufferLength);
 
             this.isListening = true;
-            this.updateUI('listening');
-
+            
             // Start analysis loop
             this.analyzeAudio();
 
-            console.log('[REALTIME] Started listening');
+            console.log('[REALTIME] Started listening for instrument input');
+            return true;
         } catch (error) {
             console.error('Microphone access error:', error);
-            this.app.showError('Could not access microphone. Please allow microphone permission.');
+            throw error;
         }
     }
 
@@ -65,12 +106,13 @@ class RealtimeRecognition {
         }
 
         // Close audio context
-        if (this.audioContext) {
+        if (this.audioContext && this.audioContext.state !== 'closed') {
             this.audioContext.close();
         }
 
         this.isListening = false;
-        this.updateUI('stopped');
+        this.detectedChords = [];
+        this.lastChord = null;
 
         console.log('[REALTIME] Stopped listening');
     }
@@ -78,168 +120,245 @@ class RealtimeRecognition {
     analyzeAudio() {
         if (!this.isListening) return;
 
-        // Get frequency data
-        this.analyser.getByteFrequencyData(this.dataArray);
+        // Get frequency data in decibels
+        this.analyser.getFloatFrequencyData(this.dataArray);
 
-        // Detect pitch and chord
-        const chord = this.detectChordFromFrequencies(this.dataArray);
-        
-        if (chord) {
-            const currentTime = Date.now();
-            
-            // Only update if chord changed or 2 seconds passed
-            if (this.lastChord !== chord || currentTime - this.lastChordTime > 2000) {
-                this.addDetectedChord(chord);
-                this.lastChord = chord;
-                this.lastChordTime = currentTime;
-            }
+        // Calculate volume for visualization
+        const volume = this.calculateVolume();
+        if (this.onVolumeChange) {
+            this.onVolumeChange(volume);
         }
 
-        // Visualize audio
-        this.visualizeAudio(this.dataArray);
+        // Only detect chords if there's significant sound
+        if (volume > 0.05) {
+            const detectedNotes = this.detectNotes();
+            
+            if (detectedNotes.length >= 2) {
+                const chord = this.identifyChord(detectedNotes);
+                
+                if (chord) {
+                    const currentTime = Date.now();
+                    
+                    // Only update if chord changed or 500ms passed
+                    if (this.lastChord !== chord || currentTime - this.lastChordTime > 500) {
+                        this.addDetectedChord(chord);
+                        this.lastChord = chord;
+                        this.lastChordTime = currentTime;
+                        
+                        if (this.onChordDetected) {
+                            this.onChordDetected(chord, detectedNotes);
+                        }
+                    }
+                }
+            }
+        }
 
         // Continue loop
         requestAnimationFrame(() => this.analyzeAudio());
     }
 
-    detectChordFromFrequencies(frequencies) {
-        // Calculate average amplitude
-        const average = frequencies.reduce((a, b) => a + b) / frequencies.length;
+    calculateVolume() {
+        let sum = 0;
+        for (let i = 0; i < this.dataArray.length; i++) {
+            // Convert from dB to linear scale
+            const amplitude = Math.pow(10, this.dataArray[i] / 20);
+            sum += amplitude * amplitude;
+        }
+        return Math.sqrt(sum / this.dataArray.length);
+    }
 
-        // Only process if there's significant sound
-        if (average < 20) return null;
+    detectNotes() {
+        const sampleRate = this.audioContext.sampleRate;
+        const binSize = sampleRate / this.analyser.fftSize;
+        const detectedNotes = [];
+        const noteScores = {};
+        
+        // Initialize scores for all notes
+        this.NOTE_NAMES.forEach(note => {
+            noteScores[note] = 0;
+        });
 
-        // Detect dominant frequencies (simplified chord detection)
-        const peaks = [];
-        for (let i = 1; i < frequencies.length - 1; i++) {
-            if (frequencies[i] > frequencies[i - 1] && 
-                frequencies[i] > frequencies[i + 1] && 
-                frequencies[i] > average * 1.5) {
-                peaks.push(i);
+        // Find peaks in the frequency spectrum
+        const peaks = this.findPeaks();
+        
+        // Map each peak to the nearest musical note
+        for (const peak of peaks) {
+            const frequency = peak.bin * binSize;
+            
+            // Only consider frequencies in musical range (60Hz - 1200Hz for most instruments)
+            if (frequency < 60 || frequency > 1200) continue;
+            
+            const noteInfo = this.frequencyToNote(frequency);
+            if (noteInfo) {
+                // Add to note score based on amplitude
+                noteScores[noteInfo.note] += peak.amplitude;
             }
         }
-
-        // Map frequencies to musical notes (simplified)
-        const chords = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B',
-                       'Cm', 'Dm', 'Em', 'Fm', 'Gm', 'Am', 'Bm'];
         
-        // Use peak pattern to estimate chord
-        const chordIndex = Math.floor((peaks.length * average) % chords.length);
-        return chords[chordIndex];
+        // Get notes with significant scores
+        const threshold = Math.max(...Object.values(noteScores)) * 0.3;
+        
+        for (const [note, score] of Object.entries(noteScores)) {
+            if (score > threshold && score > 0.1) {
+                detectedNotes.push({
+                    note: note,
+                    score: score
+                });
+            }
+        }
+        
+        // Sort by score (highest first)
+        detectedNotes.sort((a, b) => b.score - a.score);
+        
+        return detectedNotes.slice(0, 6); // Return top 6 notes
+    }
+
+    findPeaks() {
+        const peaks = [];
+        const threshold = -60; // dB threshold for peak detection
+        
+        for (let i = 2; i < this.dataArray.length - 2; i++) {
+            const current = this.dataArray[i];
+            
+            // Check if this is a local maximum
+            if (current > threshold &&
+                current > this.dataArray[i - 1] &&
+                current > this.dataArray[i + 1] &&
+                current > this.dataArray[i - 2] &&
+                current > this.dataArray[i + 2]) {
+                
+                // Convert dB to linear amplitude
+                const amplitude = Math.pow(10, current / 20);
+                
+                peaks.push({
+                    bin: i,
+                    amplitude: amplitude
+                });
+            }
+        }
+        
+        // Sort by amplitude and return top peaks
+        peaks.sort((a, b) => b.amplitude - a.amplitude);
+        return peaks.slice(0, 20);
+    }
+
+    frequencyToNote(frequency) {
+        // Calculate the note number relative to A4 (440Hz)
+        const noteNum = 12 * Math.log2(frequency / 440);
+        const noteIndex = Math.round(noteNum) + 9; // A is index 9 in NOTE_NAMES
+        
+        // Normalize to 0-11 range
+        const normalizedIndex = ((noteIndex % 12) + 12) % 12;
+        const noteName = this.NOTE_NAMES[normalizedIndex];
+        
+        // Calculate how close we are to the exact note (cents)
+        const exactNoteNum = 12 * Math.log2(frequency / 440) + 9;
+        const cents = Math.abs((exactNoteNum - Math.round(exactNoteNum)) * 100);
+        
+        // Only accept if within 30 cents of the note
+        if (cents < 30) {
+            return {
+                note: noteName,
+                frequency: frequency,
+                cents: cents
+            };
+        }
+        
+        return null;
+    }
+
+    identifyChord(detectedNotes) {
+        if (detectedNotes.length < 2) return null;
+        
+        // Get unique note names
+        const noteNames = [...new Set(detectedNotes.map(n => n.note))];
+        
+        // Convert notes to pitch classes (0-11)
+        const pitchClasses = noteNames.map(note => this.NOTE_NAMES.indexOf(note));
+        
+        let bestMatch = null;
+        let bestScore = 0;
+        
+        // Try each note as potential root
+        for (let rootIndex = 0; rootIndex < 12; rootIndex++) {
+            const rootNote = this.NOTE_NAMES[rootIndex];
+            
+            // Check if this root note is in our detected notes
+            if (!noteNames.includes(rootNote)) continue;
+            
+            // Calculate intervals from this root
+            const intervals = pitchClasses.map(pc => ((pc - rootIndex) + 12) % 12);
+            
+            // Try to match with chord templates
+            for (const [chordType, template] of Object.entries(this.CHORD_TEMPLATES)) {
+                const score = this.matchChordTemplate(intervals, template);
+                
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMatch = {
+                        root: rootNote,
+                        type: chordType,
+                        score: score
+                    };
+                }
+            }
+        }
+        
+        // Only return if we have a good match (at least 70% of template matched)
+        if (bestMatch && bestMatch.score >= 0.7) {
+            const chordName = bestMatch.type === 'maj' 
+                ? bestMatch.root 
+                : bestMatch.root + bestMatch.type;
+            return chordName;
+        }
+        
+        // If no chord matched, return the root note as a single note
+        if (noteNames.length > 0) {
+            return noteNames[0] + ' (note)';
+        }
+        
+        return null;
+    }
+
+    matchChordTemplate(intervals, template) {
+        let matched = 0;
+        
+        for (const templateInterval of template) {
+            if (intervals.includes(templateInterval)) {
+                matched++;
+            }
+        }
+        
+        return matched / template.length;
     }
 
     addDetectedChord(chord) {
         this.detectedChords.push(chord);
-        this.chordHistory.push({ chord, timestamp: Date.now() });
+        this.chordHistory.push({ 
+            chord: chord, 
+            timestamp: Date.now() 
+        });
 
         // Keep only last 20 chords
         if (this.detectedChords.length > 20) {
             this.detectedChords.shift();
         }
-
-        this.updateChordDisplay();
     }
 
-    updateChordDisplay() {
-        const liveChords = document.getElementById('live-chords');
-        if (liveChords && this.detectedChords.length > 0) {
-            liveChords.innerHTML = this.detectedChords.map(chord => 
-                `<div class="chord-item">${chord}</div>`
-            ).join('');
-        }
+    getDetectedChords() {
+        return [...this.detectedChords];
     }
 
-    visualizeAudio(frequencies) {
-        const soundWave = document.querySelector('.sound-wave');
-        if (!soundWave || !this.isListening) return;
-
-        soundWave.style.display = 'flex';
-
-        // Animate bars based on frequency data
-        const bars = soundWave.querySelectorAll('span');
-        bars.forEach((bar, index) => {
-            const value = frequencies[index * 50] || 0;
-            const height = (value / 255) * 100;
-            bar.style.height = `${Math.max(height, 10)}%`;
-        });
+    getLastChord() {
+        return this.lastChord;
     }
 
-    updateUI(state) {
-        const statusText = document.getElementById('live-status-text');
-        const startBtn = document.getElementById('start-listening-btn');
-        const liveResults = document.getElementById('live-results');
-        const micVisualizer = document.getElementById('mic-visualizer');
-
-        if (state === 'listening') {
-            if (statusText) statusText.textContent = '🎤 Listening... Play something!';
-            if (startBtn) {
-                startBtn.innerHTML = '<span class="button-content"><i class="fas fa-stop"></i><span>Stop Listening</span></span>';
-                startBtn.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
-            }
-            if (liveResults) liveResults.style.display = 'block';
-            if (micVisualizer) micVisualizer.classList.add('active');
-        } else {
-            if (statusText) statusText.textContent = 'Click button to start listening';
-            if (startBtn) {
-                startBtn.innerHTML = '<span class="button-content"><i class="fas fa-microphone"></i><span>Start Listening</span></span>';
-                startBtn.style.background = '';
-            }
-            if (micVisualizer) micVisualizer.classList.remove('active');
-        }
-    }
-
-    // Audio fingerprinting for song recognition (basic implementation)
-    async recognizeSong() {
-        if (this.audioBuffer.length < 5) return; // Need at least 5 seconds
-
-        try {
-            // Send audio data to backend for recognition
-            const response = await fetch('/api/recognize-song', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    chords: this.chordHistory.slice(-10), // Last 10 chords
-                    duration: 5
-                })
-            });
-
-            const data = await response.json();
-
-            if (data.success && data.song) {
-                this.displayRecognizedSong(data.song);
-            }
-        } catch (error) {
-            console.error('Song recognition error:', error);
-        }
-    }
-
-    displayRecognizedSong(song) {
-        const recognizedSong = document.getElementById('recognized-song');
-        if (recognizedSong) {
-            recognizedSong.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 1rem;">
-                    <img src="${song.artwork || 'https://via.placeholder.com/60x60/6366f1/ffffff?text=♪'}" 
-                         style="width: 60px; height: 60px; border-radius: 8px;" alt="${song.title}">
-                    <div style="flex: 1;">
-                        <div style="font-weight: 600; color: var(--gray-900); margin-bottom: 0.25rem;">
-                            ${song.title}
-                        </div>
-                        <div style="color: var(--gray-600); font-size: 0.875rem;">
-                            ${song.artist}
-                        </div>
-                    </div>
-                    <button class="search-action-btn" onclick="window.chordisApp.analyzeRecognizedSong('${song.title}', '${song.artist}')">
-                        <i class="fas fa-wand-magic-sparkles"></i>
-                        Analyze
-                    </button>
-                </div>
-            `;
-        }
+    clearHistory() {
+        this.detectedChords = [];
+        this.chordHistory = [];
+        this.lastChord = null;
     }
 }
 
 // Export for use in main app
-window.RealtimeRecognition = RealtimeRecognition;
-
+window.RealtimeChordRecognition = RealtimeChordRecognition;

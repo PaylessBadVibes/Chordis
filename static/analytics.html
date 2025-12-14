@@ -6,7 +6,7 @@
     <title>Analytics | Chordis</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/chordis-shared.css?v=2.0">
+    <link rel="stylesheet" href="/css/chordis-shared.css?v=3.0">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         .page-header {
@@ -166,7 +166,7 @@
         }
         
         .top-list li:hover {
-            background: rgba(124, 58, 237, 0.2);
+            background: rgba(59, 130, 246, 0.2);
             transform: translateX(4px);
         }
         
@@ -259,10 +259,9 @@
             </a>
             <div class="nav-links">
                 <a href="/">Home</a>
-                <a href="/#features">Features</a>
                 <a href="/chordai">ChordAI</a>
                 <a href="/realtime">Music Recognizer</a>
-                <a href="/library">Library</a>
+                <a href="/library" id="navLibraryLink" style="display: none;">Library</a>
                 <a href="/tutorials">Tutorials</a>
                 <a href="/analytics" class="active">Analytics</a>
             </div>
@@ -387,6 +386,10 @@
                         document.getElementById('auth-buttons').style.display = 'none';
                         document.getElementById('user-menu').style.display = 'flex';
                         document.getElementById('username-display').textContent = data.user.username;
+                        
+                        // Show Library link when logged in
+                        const navLibraryLink = document.getElementById('navLibraryLink');
+                        if (navLibraryLink) navLibraryLink.style.display = '';
                     }
                 }
             } catch (error) {
@@ -499,8 +502,8 @@
                         {
                             label: 'Searches',
                             data: searchCounts,
-                            borderColor: 'rgb(124, 58, 237)',
-                            backgroundColor: 'rgba(124, 58, 237, 0.1)',
+                            borderColor: 'rgb(59, 130, 246)',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
                             tension: 0.4
                         },
                         {

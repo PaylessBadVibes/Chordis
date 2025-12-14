@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ChordAI - Interactive Player | Chordis</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/chordis-shared.css?v=2.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/chordis-shared.css?v=3.0">
+    <link rel="stylesheet" href="/css/ultimate-guitar-style.css?v=2.1">
     <style>
         .chord-ai-layout {
             display: grid;
@@ -105,8 +106,8 @@
         
         .chord-item {
             padding: var(--space-6) var(--space-4);
-            background: rgba(124, 58, 237, 0.15);
-            border: 2px solid rgba(124, 58, 237, 0.3);
+            background: rgba(59, 130, 246, 0.15);
+            border: 2px solid rgba(59, 130, 246, 0.3);
             border-radius: var(--radius-lg);
             font-weight: 700;
             font-size: 1.5rem;
@@ -135,15 +136,15 @@
         .chord-item:hover {
             transform: translateY(-4px) scale(1.05);
             border-color: var(--primary-500);
-            background: rgba(124, 58, 237, 0.25);
-            box-shadow: 0 8px 24px rgba(124, 58, 237, 0.4);
+            background: rgba(59, 130, 246, 0.25);
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
         }
         
         .chord-item.active {
             background: var(--gradient-primary);
             border-color: transparent;
             transform: scale(1.1);
-            box-shadow: 0 12px 32px rgba(124, 58, 237, 0.6);
+            box-shadow: 0 12px 32px rgba(59, 130, 246, 0.6);
             animation: pulse 2s infinite;
         }
         
@@ -316,7 +317,7 @@
         }
         
         .fret:hover {
-            background: rgba(124, 58, 237, 0.3);
+            background: rgba(59, 130, 246, 0.3);
         }
         
         .fret.active {
@@ -346,7 +347,7 @@
         .fingering-info {
             margin-top: var(--space-4);
             padding: var(--space-4);
-            background: rgba(124, 58, 237, 0.1);
+            background: rgba(59, 130, 246, 0.1);
             border-radius: var(--radius-md);
             font-size: 0.875rem;
             color: var(--text-secondary);
@@ -436,7 +437,7 @@
         }
         
         .variation-btn.active {
-            background: rgba(124, 58, 237, 0.2);
+            background: rgba(59, 130, 246, 0.2);
             border-color: var(--primary-500);
             color: var(--text-primary);
         }
@@ -448,20 +449,34 @@
         @media (max-width: 1200px) {
             .chord-ai-layout {
                 grid-template-columns: 1fr;
+                gap: var(--space-6);
             }
             
             .tuner-panel {
                 position: relative;
                 top: 0;
                 max-height: none;
+                margin-bottom: var(--space-6);
             }
             
             .page-header h1 {
                 font-size: 2.5rem;
             }
+            
+            .container {
+                padding: 0 var(--space-5);
+            }
         }
         
         @media (max-width: 768px) {
+            .container {
+                padding: 0 var(--space-4);
+            }
+            
+            .page-header {
+                margin-bottom: var(--space-6);
+            }
+            
             .page-header h1 {
                 font-size: 2rem;
             }
@@ -471,7 +486,8 @@
             }
             
             .current-chord-display {
-                padding: var(--space-8) var(--space-4);
+                padding: var(--space-6) var(--space-4);
+                margin-bottom: var(--space-6);
             }
             
             .current-chord {
@@ -483,30 +499,51 @@
                 font-size: 1rem;
             }
             
+            .section-title {
+                font-size: 1.25rem;
+            }
+            
             .chords-grid {
-                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
                 gap: var(--space-3);
-                padding: var(--space-4);
+                padding: var(--space-5);
             }
             
             .chord-item {
-                padding: var(--space-3) var(--space-2);
+                padding: var(--space-4) var(--space-3);
                 font-size: 1.125rem;
+                min-height: 56px;
             }
             
             .controls-panel {
                 flex-direction: column;
                 gap: var(--space-3);
+                margin-top: var(--space-6);
             }
             
             .controls-panel .btn {
                 width: 100%;
+                padding: var(--space-3) var(--space-5);
+                min-height: 48px;
             }
             
             .play-button {
                 width: 72px;
                 height: 72px;
                 font-size: 1.75rem;
+            }
+            
+            /* Tempo control mobile */
+            .tempo-control {
+                flex-wrap: wrap;
+                gap: var(--space-2);
+                margin-top: var(--space-5);
+            }
+            
+            .tempo-btn {
+                min-width: 56px;
+                min-height: 44px;
+                padding: var(--space-2) var(--space-3);
             }
             
             /* Tuner panel mobile optimizations */
@@ -523,35 +560,56 @@
             }
             
             .fret {
-                min-height: 40px;
+                min-height: 44px;
             }
             
             .string-labels {
-                font-size: 0.8125rem;
+                font-size: 0.875rem;
             }
             
             .tuner-string {
-                padding: var(--space-2);
+                padding: var(--space-3);
             }
             
             .string-name {
                 font-size: 1.25rem;
-                min-width: 32px;
+                min-width: 36px;
             }
             
             .string-info {
-                font-size: 0.8125rem;
+                font-size: 0.875rem;
             }
             
             .play-string-btn {
-                width: 40px;
-                height: 40px;
+                width: 44px;
+                height: 44px;
+            }
+            
+            .play-chord-btn {
+                min-height: 48px;
             }
         }
         
         @media (max-width: 480px) {
+            .container {
+                padding: 0 var(--space-3);
+            }
+            
+            .page-header {
+                margin-bottom: var(--space-5);
+            }
+            
             .page-header h1 {
                 font-size: 1.75rem;
+            }
+            
+            .page-header p {
+                font-size: 0.9375rem;
+            }
+            
+            .current-chord-display {
+                padding: var(--space-5) var(--space-3);
+                margin-bottom: var(--space-5);
             }
             
             .current-chord {
@@ -560,24 +618,48 @@
             }
             
             .chord-info {
-                font-size: 0.875rem;
+                font-size: 0.9375rem;
+            }
+            
+            .section-title {
+                font-size: 1.125rem;
             }
             
             .chords-grid {
-                grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
                 gap: var(--space-2);
-                padding: var(--space-3);
+                padding: var(--space-4);
             }
             
             .chord-item {
-                padding: var(--space-2);
+                padding: var(--space-3) var(--space-2);
                 font-size: 1rem;
+                min-height: 52px;
+            }
+            
+            .controls-panel .btn {
+                padding: var(--space-3) var(--space-4);
             }
             
             .play-button {
-                width: 60px;
-                height: 60px;
+                width: 64px;
+                height: 64px;
                 font-size: 1.5rem;
+            }
+            
+            .tempo-control {
+                gap: var(--space-1);
+            }
+            
+            .tempo-control span {
+                font-size: 0.875rem;
+                width: 100%;
+                text-align: center;
+            }
+            
+            .tempo-btn {
+                min-width: 52px;
+                font-size: 0.875rem;
             }
             
             .tuner-panel {
@@ -598,22 +680,40 @@
             }
             
             .tuner-tab {
-                font-size: 0.8125rem;
-                padding: var(--space-2);
-            }
-            
-            .tuner-tab i {
-                font-size: 0.75rem;
-            }
-            
-            .variation-btn {
                 font-size: 0.875rem;
                 padding: var(--space-2);
             }
             
+            .tuner-tab i {
+                font-size: 0.8125rem;
+            }
+            
+            .variation-btn {
+                font-size: 0.875rem;
+                padding: var(--space-2) var(--space-3);
+            }
+            
+            .fret {
+                min-height: 40px;
+            }
+            
             .fret.active::after {
-                width: 16px;
-                height: 16px;
+                width: 14px;
+                height: 14px;
+            }
+            
+            .tuner-string {
+                padding: var(--space-2);
+            }
+            
+            .string-name {
+                font-size: 1.125rem;
+                min-width: 32px;
+            }
+            
+            .play-string-btn {
+                width: 40px;
+                height: 40px;
             }
         }
         
@@ -635,12 +735,75 @@
             background: var(--gradient-primary);
             color: white;
             border-color: transparent;
-            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
         }
         
         .tempo-btn:hover:not(.active) {
             border-color: var(--primary-500);
             transform: translateY(-2px);
+        }
+        
+        /* Mobile Navigation */
+        .mobile-menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            z-index: 1001;
+        }
+        
+        @media (max-width: 768px) {
+            nav {
+                padding: 1rem;
+            }
+            
+            .nav-content {
+                position: relative;
+            }
+            
+            .mobile-menu-toggle {
+                display: block;
+            }
+            
+            .nav-links {
+                position: fixed;
+                top: 0;
+                left: -100%;
+                width: 280px;
+                height: 100vh;
+                background: #0f0f23;
+                flex-direction: column;
+                padding: 5rem 2rem 2rem;
+                gap: 1.5rem;
+                transition: left 0.25s ease;
+                z-index: 1000;
+                border-right: 1px solid rgba(255, 255, 255, 0.1);
+                overflow-y: auto;
+            }
+            
+            .nav-links.active {
+                left: 0;
+            }
+            
+            .nav-links a {
+                font-size: 1.125rem;
+                padding: 0.75rem 0;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            
+            .auth-buttons {
+                flex-direction: column;
+                gap: 0.5rem;
+                width: 100%;
+            }
+            
+            .auth-buttons .btn {
+                width: 100%;
+                justify-content: center;
+            }
         }
     </style>
 </head>
@@ -650,12 +813,14 @@
             <a href="/" class="logo">
                 <i class="fas fa-music"></i> Chordis
             </a>
-            <div class="nav-links">
+            <button class="mobile-menu-toggle" onclick="toggleMobileMenu()" aria-label="Toggle menu">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="nav-links" id="navLinks">
                 <a href="/">Home</a>
-                <a href="/#features">Features</a>
                 <a href="/chordai" class="active">ChordAI</a>
                 <a href="/realtime">Music Recognizer</a>
-                <a href="/library">Library</a>
+                <a href="/library" id="navLibraryLink" style="display: none;">Library</a>
                 <a href="/tutorials">Tutorials</a>
                 <a href="/analytics">Analytics</a>
             </div>
@@ -696,31 +861,51 @@
                         <div class="chord-info" id="chordInfo">No song loaded</div>
                     </div>
                     
-                    <div class="chords-section">
-                        <h3 class="section-title">
-                            <i class="fas fa-music"></i>
-                            Chord Progression
-                        </h3>
-                        <div class="chords-grid" id="chords">
-                            <div class="empty-state">
-                                <i class="fas fa-music"></i>
-                                <h3>No Chords Available</h3>
-                                <p>Analyze a song first, then click "Open in ChordAI" to see interactive chord visualization here</p>
-                                <button class="btn btn-primary btn-lg" onclick="window.location.href='/'">
-                                    <i class="fas fa-search"></i> Analyze Songs
-                                </button>
-                            </div>
+                    <!-- View Toggle -->
+                    <div style="margin-bottom: var(--space-6); padding: var(--space-4); background: var(--bg-overlay); border: 1px solid var(--border-color); border-radius: var(--radius-lg);">
+                        <div style="display: flex; gap: var(--space-3); flex-wrap: wrap;">
+                            <button class="btn btn-secondary view-toggle-btn active" data-view="separate" onclick="switchView('separate')">
+                                <i class="fas fa-th-large"></i> Grid View
+                            </button>
+                            <button class="btn btn-secondary view-toggle-btn" data-view="integrated" onclick="switchView('integrated')">
+                                <i class="fas fa-music"></i> Tab View
+                            </button>
                         </div>
                     </div>
                     
-                    <!-- Lyrics Section -->
-                    <div class="chords-section" style="margin-top: var(--space-8);">
-                        <h3 class="section-title">
-                            <i class="fas fa-align-left"></i>
-                            Lyrics
-                        </h3>
-                        <div id="lyrics-display" style="padding: var(--space-6); background: rgba(0,0,0,0.2); border-radius: var(--radius-lg); min-height: 200px; max-height: 400px; overflow-y: auto; line-height: 1.8; color: var(--text-secondary);">
-                            <p style="text-align: center; opacity: 0.5;">No lyrics available</p>
+                    <!-- Integrated Sheet View (hidden by default) -->
+                    <div id="integrated-view-container" style="display: none; margin-bottom: var(--space-8);">
+                        <!-- Dynamically generated by IntegratedSheetDisplay -->
+                    </div>
+                    
+                    <!-- Separate Views (default) -->
+                    <div id="separate-views-container">
+                        <div class="chords-section">
+                            <h3 class="section-title">
+                                <i class="fas fa-music"></i>
+                                Chord Progression
+                            </h3>
+                            <div class="chords-grid" id="chords">
+                                <div class="empty-state">
+                                    <i class="fas fa-music"></i>
+                                    <h3>No Chords Available</h3>
+                                    <p>Analyze a song first, then click "Open in ChordAI" to see interactive chord visualization here</p>
+                                    <button class="btn btn-primary btn-lg" onclick="window.location.href='/'">
+                                        <i class="fas fa-search"></i> Analyze Songs
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Lyrics Section -->
+                        <div class="chords-section" style="margin-top: var(--space-8);">
+                            <h3 class="section-title">
+                                <i class="fas fa-align-left"></i>
+                                Lyrics
+                            </h3>
+                            <div id="lyrics-display" style="padding: var(--space-6); background: rgba(0,0,0,0.2); border-radius: var(--radius-lg); min-height: 200px; max-height: 400px; overflow-y: auto; line-height: 1.8; color: var(--text-secondary);">
+                                <p style="text-align: center; opacity: 0.5;">No lyrics available</p>
+                            </div>
                         </div>
                     </div>
                     
@@ -893,6 +1078,8 @@
     <!-- Hidden audio player -->
     <audio id="audioPlayer" style="display: none;"></audio>
     
+    <script src="/js/ultimate-guitar-display.js?v=2.1"></script>
+    <script src="/js/chord-pdf-export.js?v=2.1"></script>
     <script>
         let isPlaying = false;
         let currentChordIndex = 0;
@@ -900,6 +1087,62 @@
         let playInterval = null;
         let audioPlayer = null;
         let currentSongData = null;
+        
+        // Reset all state - prevents stale data between songs
+        function resetState() {
+            console.log('[CHORDAI STATE] Resetting state');
+            
+            // Clear data
+            isPlaying = false;
+            currentChordIndex = 0;
+            chordData = [];
+            currentSongData = null;
+            
+            // Stop any playing interval
+            if (playInterval) {
+                clearInterval(playInterval);
+                playInterval = null;
+            }
+            
+            // Reset audio
+            const audioElement = document.getElementById('audioPlayer');
+            if (audioElement) {
+                audioElement.pause();
+                audioElement.src = '';
+                audioElement.currentTime = 0;
+            }
+            
+            // Reset UI
+            document.getElementById('currentChord').textContent = '--';
+            document.getElementById('chordInfo').textContent = 'No song loaded';
+            document.getElementById('chords').innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-music"></i>
+                    <h3>No Chords Available</h3>
+                    <p>Loading...</p>
+                </div>
+            `;
+            document.getElementById('lyrics-display').innerHTML = '<p style="text-align: center; opacity: 0.5;">Loading lyrics...</p>';
+            
+            // Reset play button
+            const playBtn = document.getElementById('playBtn');
+            if (playBtn) {
+                playBtn.classList.remove('playing');
+                const icon = playBtn.querySelector('i');
+                if (icon) {
+                    icon.classList.remove('fa-pause');
+                    icon.classList.add('fa-play');
+                }
+            }
+            
+            // Clear integrated view
+            const integratedContainer = document.getElementById('integrated-view-container');
+            if (integratedContainer) {
+                integratedContainer.innerHTML = '';
+            }
+            
+            console.log('[CHORDAI STATE] Reset complete');
+        }
         
         // Check auth
         async function checkAuth() {
@@ -911,6 +1154,10 @@
                         document.getElementById('auth-buttons').style.display = 'none';
                         document.getElementById('user-menu').style.display = 'flex';
                         document.getElementById('username-display').textContent = data.user.username;
+                        
+                        // Show Library link when logged in
+                        const navLibraryLink = document.getElementById('navLibraryLink');
+                        if (navLibraryLink) navLibraryLink.style.display = '';
                     }
                 }
             } catch (error) {
@@ -927,6 +1174,9 @@
         
         // Load chord data
         async function loadChordData() {
+            // Reset state before loading new data
+            resetState();
+            
             const urlParams = new URLSearchParams(window.location.search);
             const songId = urlParams.get('song');
             
@@ -944,8 +1194,33 @@
                     console.log('Chord data:', chordDataObj);
                     console.log('Lyrics data:', lyricsDataObj);
                     
-                    // Store song data globally
-                    currentSongData = data;
+                    // Extract title and artist
+                    const titleParts = data.title.split(' - ');
+                    const title = titleParts[0] || data.title;
+                    const artist = titleParts[1] || 'Unknown Artist';
+                    
+                    // Extract lyrics text
+                    let lyricsText = '';
+                    if (lyricsDataObj) {
+                        if (lyricsDataObj.text) {
+                            lyricsText = lyricsDataObj.text;
+                        } else if (Array.isArray(lyricsDataObj.lyrics)) {
+                            lyricsText = lyricsDataObj.lyrics.map(l => l.text || l).join('\n');
+                        } else if (typeof lyricsDataObj === 'string') {
+                            lyricsText = lyricsDataObj;
+                        }
+                    }
+                    
+                    // Store song data globally with normalized structure
+                    currentSongData = {
+                        ...data,
+                        title: title,
+                        artist: artist,
+                        lyrics: lyricsText,
+                        key: data.key || 'C Major',
+                        tempo: data.tempo || 120,
+                        duration: data.duration || 180
+                    };
                     
                     // Extract chord names
                     let chordNames = [];
@@ -961,12 +1236,6 @@
                     console.log('Extracted chords:', chordNames);
                     
                     displayChords(chordNames);
-                    
-                    // Extract title and artist
-                    const titleParts = data.title.split(' - ');
-                    const title = titleParts[0] || data.title;
-                    const artist = titleParts[1] || 'Unknown Artist';
-                    
                     updateChordInfo(title, artist);
                     
                     // Display lyrics if available
@@ -1090,6 +1359,75 @@
             document.getElementById('chordInfo').textContent = `${title} - ${artist}`;
         }
         
+        // View switching functions
+        function switchView(viewType) {
+            const integratedContainer = document.getElementById('integrated-view-container');
+            const separateContainer = document.getElementById('separate-views-container');
+            const toggleBtns = document.querySelectorAll('.view-toggle-btn');
+            
+            toggleBtns.forEach(btn => {
+                if (btn.dataset.view === viewType) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            if (viewType === 'integrated') {
+                integratedContainer.style.display = 'block';
+                separateContainer.style.display = 'none';
+                
+                // Render integrated view if not already rendered and we have song data
+                if (!integratedContainer.innerHTML.trim() && currentSongData) {
+                    renderIntegratedView();
+                }
+            } else {
+                integratedContainer.style.display = 'none';
+                separateContainer.style.display = 'block';
+            }
+        }
+        
+        function renderIntegratedView() {
+            if (!currentSongData) return;
+            
+            // Initialize IntegratedSheetDisplay if not exists
+            if (!window.sheetDisplay) {
+                window.sheetDisplay = new IntegratedSheetDisplay();
+            }
+            
+            // Prepare data
+            const songData = {
+                title: currentSongData.title || 'Unknown Song',
+                artist: currentSongData.artist || 'Unknown Artist',
+                chords: chordData || [],
+                lyrics: currentSongData.lyrics || '',
+                key: currentSongData.key || 'C Major',
+                tempo: currentSongData.tempo || 120,
+                duration: currentSongData.duration || 180
+            };
+            
+            // Generate integrated view HTML
+            const html = window.sheetDisplay.generate(songData);
+            document.getElementById('integrated-view-container').innerHTML = html;
+            
+            // Add click handlers to sheet lines for seeking
+            setTimeout(() => {
+                document.querySelectorAll('.sheet-line').forEach(line => {
+                    line.addEventListener('click', () => {
+                        const timestamp = parseFloat(line.dataset.timestamp || 0);
+                        if (audioPlayer && !isNaN(timestamp)) {
+                            audioPlayer.currentTime = timestamp;
+                            if (!isPlaying) {
+                                togglePlay();
+                            }
+                        }
+                    });
+                });
+            }, 100);
+            
+            console.log('[CHORDAI INTEGRATED VIEW] Rendered with', chordData.length, 'chords');
+        }
+        
         function selectChord(index) {
             document.querySelectorAll('.chord-item').forEach(item => item.classList.remove('active'));
             
@@ -1150,6 +1488,17 @@
         
         function saveToLibrary() {
             alert('Save to Library feature coming soon! Sign in to save your analyses.');
+        }
+        
+        // Set up audio player timeupdate for integrated view syncing
+        const audioElement = document.getElementById('audioPlayer');
+        if (audioElement) {
+            audioElement.addEventListener('timeupdate', () => {
+                // Sync integrated sheet view if active
+                if (window.sheetDisplay && document.getElementById('integrated-view-container').style.display !== 'none') {
+                    window.sheetDisplay.highlightChord(audioElement.currentTime);
+                }
+            });
         }
         
         // Chord diagram and tuner functionality
@@ -1376,6 +1725,35 @@
             document.querySelectorAll('.tempo-btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
         }
+        
+        // Mobile Menu Toggle
+        function toggleMobileMenu() {
+            const navLinks = document.getElementById('navLinks');
+            const menuIcon = document.querySelector('.mobile-menu-toggle i');
+            
+            navLinks.classList.toggle('active');
+            
+            // Toggle icon between bars and times
+            if (navLinks.classList.contains('active')) {
+                menuIcon.classList.remove('fa-bars');
+                menuIcon.classList.add('fa-times');
+            } else {
+                menuIcon.classList.remove('fa-times');
+                menuIcon.classList.add('fa-bars');
+            }
+        }
+        
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', (e) => {
+            const navLinks = document.getElementById('navLinks');
+            const menuToggle = document.querySelector('.mobile-menu-toggle');
+            
+            if (navLinks && navLinks.classList.contains('active')) {
+                if (!navLinks.contains(e.target) && !menuToggle.contains(e.target)) {
+                    toggleMobileMenu();
+                }
+            }
+        });
         
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {

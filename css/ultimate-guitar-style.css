@@ -1,301 +1,811 @@
 /* ================================
    ULTIMATE GUITAR STYLE
-   Chords positioned above lyrics
+   Clean, professional chord sheet layout
    ================================ */
 
-.ultimate-guitar-view {
-    background: white;
-    border-radius: var(--radius-md);
-    padding: 2rem;
-    font-family: 'Courier New', Courier, monospace;
-    line-height: 2.5;
-    font-size: 14px;
-    color: var(--gray-900);
+/* Container */
+.ug-container {
+    font-family: 'Roboto Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
+    background: #0d1117;
+    color: #c9d1d9;
     max-width: 900px;
     margin: 0 auto;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
+/* Header */
 .ug-header {
-    margin-bottom: 2rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 2px solid var(--gray-200);
+    padding: 24px;
+    border-bottom: 1px solid #21262d;
 }
 
-.ug-song-title {
+.ug-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.ug-title {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-size: 1.75rem;
     font-weight: 700;
-    color: var(--gray-900);
-    margin: 0 0 0.5rem 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: #f0f6fc;
+    margin: 0 0 4px 0;
 }
 
 .ug-artist {
-    font-size: 1.125rem;
-    color: var(--gray-600);
-    margin: 0 0 1rem 0;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 1rem;
+    color: #8b949e;
+    margin: 0;
+}
+
+.ug-download-btn {
+    padding: 10px 16px;
+    background: #238636;
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    white-space: nowrap;
+}
+
+.ug-download-btn:hover {
+    background: #2ea043;
+}
+
+.ug-download-btn:active {
+    background: #238636;
+    transform: scale(0.98);
 }
 
 .ug-meta {
     display: flex;
-    gap: 1.5rem;
     flex-wrap: wrap;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    gap: 16px;
     font-size: 0.875rem;
+    color: #8b949e;
+    margin-bottom: 12px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
-.ug-meta-item {
+.ug-meta strong {
+    color: #c9d1d9;
+}
+
+.ug-stats {
+    display: flex;
+    gap: 20px;
+    font-size: 0.875rem;
+    color: #8b949e;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Instrument Tabs */
+.ug-tabs {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    color: var(--gray-600);
+    gap: 12px;
+    padding: 12px 24px;
+    background: #161b22;
+    border-bottom: 1px solid #21262d;
 }
 
-.ug-meta-item i {
-    color: var(--primary);
+.ug-tabs-label {
+    font-size: 0.875rem;
+    color: #8b949e;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
-/* Chord Diagrams Section */
-.ug-chord-diagrams {
+.ug-tabs-buttons {
     display: flex;
-    gap: 2rem;
-    flex-wrap: wrap;
-    padding: 1.5rem;
-    background: var(--gray-50);
-    border-radius: var(--radius-md);
-    margin-bottom: 2rem;
-    justify-content: center;
+    gap: 4px;
 }
 
-.chord-diagram {
+.ug-tab {
+    padding: 6px 12px;
+    border: 1px solid #30363d;
+    background: transparent;
+    color: #8b949e;
+    font-size: 0.8rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.ug-tab:hover {
+    background: #21262d;
+    color: #c9d1d9;
+}
+
+.ug-tab.active {
+    background: #238636;
+    border-color: #238636;
+    color: #fff;
+}
+
+/* Chord Diagrams Grid */
+.ug-diagrams {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 20px 24px;
+    background: #161b22;
+    border-bottom: 1px solid #21262d;
+}
+
+.ug-chord-box {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 12px;
+    min-width: 80px;
 }
 
-.chord-diagram-name {
-    font-weight: 700;
-    font-size: 1rem;
-    color: var(--gray-900);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+.ug-chord-box.piano {
+    min-width: 120px;
 }
 
-.chord-diagram-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 20px);
-    grid-template-rows: repeat(5, 20px);
-    gap: 0;
-    position: relative;
-    padding: 5px;
-}
-
-/* Chord diagram strings (vertical lines) */
-.chord-diagram-grid::before {
-    content: '';
-    position: absolute;
-    top: 5px;
-    left: 5px;
-    right: 5px;
-    bottom: 5px;
-    background-image: 
-        repeating-linear-gradient(to right, 
-            var(--gray-400) 0px, 
-            var(--gray-400) 1px, 
-            transparent 1px, 
-            transparent 20px
-        ),
-        repeating-linear-gradient(to bottom, 
-            var(--gray-400) 0px, 
-            var(--gray-400) 2px, 
-            transparent 2px, 
-            transparent 20px
-        );
-    pointer-events: none;
-}
-
-.chord-diagram-dot {
-    width: 12px;
-    height: 12px;
-    background: var(--primary);
-    border-radius: 50%;
-    margin: auto;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-
-/* Lyrics with Chords */
-.ug-lyrics {
-    white-space: pre-wrap;
-    position: relative;
-}
-
-.ug-line {
-    margin-bottom: 1.5rem;
-    position: relative;
-    min-height: 3em;
-}
-
-.ug-chords-row {
-    font-weight: 700;
-    color: var(--primary);
-    font-size: 15px;
-    line-height: 2;
-    white-space: pre;
-    user-select: none;
-    cursor: pointer;
-    transition: color 0.2s;
-}
-
-.ug-chords-row:hover {
-    color: var(--primary-dark);
-}
-
-.ug-lyrics-row {
-    color: var(--gray-900);
-    white-space: pre;
-    line-height: 2;
-}
-
-.ug-chord-inline {
-    color: var(--primary);
-    font-weight: 700;
-    cursor: pointer;
-    padding: 0 2px;
-    transition: all 0.2s;
-    display: inline-block;
-}
-
-.ug-chord-inline:hover {
-    background: var(--primary);
-    color: white;
-    border-radius: 4px;
-}
-
-/* Section Headers (Verse, Chorus, etc.) */
-.ug-section {
-    font-weight: 700;
-    color: var(--gray-700);
-    font-size: 0.875rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-top: 2rem;
-    margin-bottom: 1rem;
-    padding: 0.5rem 1rem;
-    background: var(--gray-100);
-    border-left: 4px solid var(--primary);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-}
-
-/* View Toggle Buttons */
-.view-toggle {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 1.5rem;
-    background: var(--gray-100);
-    padding: 0.5rem;
-    border-radius: var(--radius-md);
-    width: fit-content;
-}
-
-.view-toggle-btn {
-    padding: 0.5rem 1rem;
-    border: none;
-    background: transparent;
-    color: var(--gray-600);
+.ug-chord-name {
+    font-size: 0.9rem;
     font-weight: 600;
+    color: #58a6ff;
+    margin-bottom: 8px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* SVG Chord Diagram */
+.chord-svg {
+    display: block;
+}
+
+/* Piano Keyboard */
+.piano-keyboard {
+    position: relative;
+    display: flex;
+    height: 50px;
+    width: 112px;
+}
+
+.piano-white {
+    width: 16px;
+    height: 50px;
+    background: linear-gradient(to bottom, #f0f0f0, #fff);
+    border: 1px solid #999;
+    border-radius: 0 0 3px 3px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 4px;
+    font-size: 10px;
+    color: transparent;
+}
+
+.piano-white.active {
+    background: linear-gradient(to bottom, #58a6ff, #388bfd);
+    color: #fff;
+}
+
+.piano-black {
+    position: absolute;
+    width: 10px;
+    height: 30px;
+    background: linear-gradient(to bottom, #333, #111);
+    border-radius: 0 0 2px 2px;
+    z-index: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 2px;
+    font-size: 8px;
+    color: transparent;
+}
+
+.piano-black.active {
+    background: linear-gradient(to bottom, #1f6feb, #58a6ff);
+    color: #fff;
+}
+
+.piano-notes {
+    margin-top: 8px;
+    font-size: 0.7rem;
+    color: #8b949e;
+}
+
+/* Strumming Pattern */
+.ug-strumming {
+    padding: 16px 24px;
+    background: #161b22;
+    border-bottom: 1px solid #21262d;
+}
+
+.ug-strumming-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-size: 0.875rem;
-    cursor: pointer;
-    border-radius: var(--radius-sm);
-    transition: all 0.2s;
+    color: #8b949e;
+}
+
+.ug-strumming-bpm {
+    color: #58a6ff;
+}
+
+.ug-strumming-visual {
+    display: flex;
+    justify-content: center;
+    gap: 2px;
+    margin-bottom: 4px;
+}
+
+.strum {
+    width: 36px;
+    height: 44px;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-}
-
-.view-toggle-btn:hover {
-    background: var(--gray-200);
-    color: var(--gray-900);
-}
-
-.view-toggle-btn.active {
-    background: white;
-    color: var(--primary);
-    box-shadow: var(--shadow-sm);
-}
-
-/* Playback Indicator */
-.ug-line.active {
-    background: rgba(91, 79, 255, 0.05);
-    border-left: 3px solid var(--primary);
-    padding-left: 1rem;
-    margin-left: -1rem;
-}
-
-.ug-chord-inline.active {
-    background: var(--primary);
-    color: white;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    background: #21262d;
+    border: 1px solid #30363d;
     border-radius: 4px;
-    padding: 2px 4px;
-    animation: pulse 0.5s;
 }
 
-@keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
+.strum.down {
+    color: #58a6ff;
 }
 
-/* Export/Print Styles */
+.strum.up {
+    color: #3fb950;
+}
+
+.strum.rest {
+    color: #484f58;
+}
+
+.ug-strumming-counts {
+    display: flex;
+    justify-content: center;
+    gap: 2px;
+}
+
+.ug-strumming-counts span {
+    width: 36px;
+    text-align: center;
+    font-size: 0.75rem;
+    color: #8b949e;
+}
+
+/* Main Content Area */
+.ug-content {
+    padding: 24px;
+    background: #0d1117;
+}
+
+/* Section Headers */
+.ug-section {
+    font-weight: 700;
+    color: #f0f6fc;
+    font-size: 0.9rem;
+    margin: 24px 0 12px 0;
+    padding: 0;
+}
+
+.ug-section:first-child {
+    margin-top: 0;
+}
+
+/* Lines */
+.ug-line {
+    margin-bottom: 4px;
+    line-height: 1.6;
+}
+
+.ug-line-empty {
+    height: 16px;
+}
+
+/* Chords Row - Clean Ultimate Guitar Style */
+.ug-chords {
+    color: #58a6ff;
+    font-weight: 700;
+    font-size: 14px;
+    white-space: pre;
+    margin-bottom: 2px;
+    line-height: 1.5;
+    font-family: 'Roboto Mono', 'Consolas', 'Monaco', monospace;
+}
+
+/* Individual chord in Tab View - plain text style like Ultimate Guitar */
+.ultimate-guitar-view .ug-chord,
+.ug-chords .ug-chord,
+span.ug-chord {
+    color: #58a6ff !important;
+    font-weight: 700 !important;
+    cursor: pointer;
+    background: transparent !important;
+    background-color: transparent !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    display: inline !important;
+    font-family: 'Roboto Mono', 'Consolas', monospace !important;
+}
+
+.ultimate-guitar-view .ug-chord:hover,
+.ug-chords .ug-chord:hover,
+span.ug-chord:hover {
+    color: #79c0ff !important;
+    text-decoration: underline;
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+.ultimate-guitar-view .ug-chord.active,
+.ug-chords .ug-chord.active,
+span.ug-chord.active {
+    color: #fff !important;
+    background: #58a6ff !important;
+    background-color: #58a6ff !important;
+    padding: 1px 4px !important;
+    border-radius: 3px !important;
+}
+
+/* Lyrics Row */
+.ug-lyrics {
+    color: #c9d1d9;
+    white-space: pre-wrap;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* Active Line Highlight */
+.ug-line.active {
+    background: rgba(88, 166, 255, 0.1);
+    border-left: 3px solid #58a6ff;
+    padding-left: 12px;
+    margin-left: -15px;
+    border-radius: 0 4px 4px 0;
+}
+
+/* ================================
+   PRINT / PDF STYLES
+   Clean black & white output
+   ================================ */
 @media print {
-    .view-toggle,
-    .ug-meta {
-        display: none;
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
     }
     
-    .ultimate-guitar-view {
+    body {
+        background: white !important;
+        margin: 0;
         padding: 0;
-        max-width: 100%;
     }
     
-    .ug-chords-row {
-        color: #000;
+    .ug-container {
+        background: white !important;
+        color: #000 !important;
+        max-width: 100%;
+        border-radius: 0;
+        box-shadow: none;
+    }
+    
+    .ug-header {
+        background: white !important;
+        border-bottom: 2px solid #000;
+        padding: 16px 0;
+    }
+    
+    .ug-title {
+        color: #000 !important;
+        font-size: 1.5rem;
+    }
+    
+    .ug-artist {
+        color: #333 !important;
+    }
+    
+    .ug-meta, .ug-stats {
+        color: #333 !important;
+        font-size: 0.8rem;
+    }
+    
+    .ug-meta strong {
+        color: #000 !important;
+    }
+    
+    /* Hide interactive elements */
+    .ug-tabs,
+    .ug-download-btn {
+        display: none !important;
+    }
+    
+    .ug-header-top {
+        display: block !important;
+    }
+    
+    /* Chord diagrams for print */
+    .ug-diagrams {
+        background: white !important;
+        border: 1px solid #ccc;
+        padding: 16px;
+        page-break-inside: avoid;
+    }
+    
+    .ug-chord-box {
+        background: white !important;
+        border: 1px solid #999;
+    }
+    
+    .ug-chord-name {
+        color: #000 !important;
+        font-weight: bold;
+    }
+    
+    /* Strumming for print */
+    .ug-strumming {
+        background: white !important;
+        border: 1px solid #ccc;
+        page-break-inside: avoid;
+    }
+    
+    .ug-strumming-header {
+        color: #000 !important;
+    }
+    
+    .ug-strumming-bpm {
+        color: #000 !important;
+    }
+    
+    .strum {
+        background: white !important;
+        border: 1px solid #333;
+        color: #000 !important;
+    }
+    
+    .strum.down, .strum.up {
+        color: #000 !important;
+    }
+    
+    .strum.rest {
+        color: #999 !important;
+    }
+    
+    .ug-strumming-counts span {
+        color: #333 !important;
+    }
+    
+    /* Content for print */
+    .ug-content {
+        background: white !important;
+        padding: 20px 0;
+    }
+    
+    .ug-section {
+        color: #000 !important;
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 4px;
+        margin-top: 20px;
+    }
+    
+    .ug-chords, 
+    .ug-chord,
+    span.ug-chord,
+    .ug-chords .ug-chord {
+        color: #000 !important;
+        font-weight: bold !important;
+        background: transparent !important;
+    }
+    
+    .ug-lyrics {
+        color: #000 !important;
+    }
+    
+    /* Hide hover/active effects */
+    .ug-chord:hover, .ug-chord.active,
+    span.ug-chord:hover, span.ug-chord.active,
+    .ug-line.active {
+        background: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    
+    /* Page breaks */
+    .ug-header {
+        page-break-after: avoid;
+    }
+    
+    .ug-diagrams {
+        page-break-before: avoid;
+        page-break-after: avoid;
+    }
+    
+    .ug-section {
+        page-break-after: avoid;
+    }
+    
+    .ug-line {
+        page-break-inside: avoid;
     }
 }
 
-/* Responsive */
+/* ================================
+   LIGHT MODE SUPPORT
+   ================================ */
+.ug-container.light-mode,
+.light-mode .ug-container {
+    background: #fff;
+    color: #24292f;
+}
+
+.light-mode .ug-header {
+    border-color: #d0d7de;
+}
+
+.light-mode .ug-download-btn {
+    background: #2da44e;
+}
+
+.light-mode .ug-download-btn:hover {
+    background: #218838;
+}
+
+.light-mode .ug-title {
+    color: #24292f;
+}
+
+.light-mode .ug-artist,
+.light-mode .ug-meta,
+.light-mode .ug-stats {
+    color: #57606a;
+}
+
+.light-mode .ug-meta strong {
+    color: #24292f;
+}
+
+.light-mode .ug-tabs {
+    background: #f6f8fa;
+    border-color: #d0d7de;
+}
+
+.light-mode .ug-tab {
+    border-color: #d0d7de;
+    color: #57606a;
+}
+
+.light-mode .ug-tab:hover {
+    background: #eaeef2;
+    color: #24292f;
+}
+
+.light-mode .ug-tab.active {
+    background: #2da44e;
+    border-color: #2da44e;
+    color: #fff;
+}
+
+.light-mode .ug-diagrams {
+    background: #f6f8fa;
+    border-color: #d0d7de;
+}
+
+.light-mode .ug-chord-box {
+    background: #fff;
+    border-color: #d0d7de;
+}
+
+.light-mode .ug-chord-name {
+    color: #0969da;
+}
+
+.light-mode .ug-strumming {
+    background: #f6f8fa;
+    border-color: #d0d7de;
+}
+
+.light-mode .strum {
+    background: #fff;
+    border-color: #d0d7de;
+}
+
+.light-mode .strum.down {
+    color: #0969da;
+}
+
+.light-mode .strum.up {
+    color: #1a7f37;
+}
+
+.light-mode .ug-content {
+    background: #fff;
+}
+
+.light-mode .ug-section {
+    color: #24292f;
+}
+
+.light-mode .ug-chords,
+.light-mode .ug-chord,
+.light-mode span.ug-chord,
+.light-mode .ug-chords .ug-chord {
+    color: #0969da !important;
+    background: transparent !important;
+}
+
+.light-mode .ug-lyrics {
+    color: #24292f;
+}
+
+/* ================================
+   RESPONSIVE
+   ================================ */
+@media (max-width: 992px) {
+    .ug-diagrams {
+        gap: 12px;
+    }
+    
+    .ug-chord-box {
+        min-width: 65px;
+        padding: 10px;
+    }
+}
+
 @media (max-width: 768px) {
-    .ultimate-guitar-view {
-        padding: 1rem;
+    .ug-container {
+        border-radius: 0;
+    }
+    
+    .ug-header, .ug-tabs, .ug-diagrams, .ug-strumming, .ug-content {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+    
+    .ug-header-top {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .ug-download-btn {
+        width: 100%;
+        text-align: center;
+    }
+    
+    .ug-title {
+        font-size: 1.25rem;
+    }
+    
+    .ug-meta {
+        flex-direction: column;
+        gap: 6px;
+    }
+    
+    .ug-stats {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .ug-tabs-buttons {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .ug-tab {
+        padding: 8px 10px;
+        font-size: 0.75rem;
+    }
+    
+    .ug-diagrams {
+        gap: 8px;
+        padding: 12px;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+    }
+    
+    .ug-chord-box {
+        min-width: 60px;
+        padding: 8px;
+        flex-shrink: 0;
+    }
+    
+    .chord-svg {
+        width: 60px;
+        height: 75px;
+    }
+    
+    .ug-chord-name {
+        font-size: 0.8rem;
+    }
+    
+    .strum {
+        width: 28px;
+        height: 36px;
+        font-size: 1.1rem;
+    }
+    
+    .ug-strumming-counts span {
+        width: 28px;
+        font-size: 0.65rem;
+    }
+    
+    .ug-chords, .ug-lyrics, .ug-chord, span.ug-chord {
         font-size: 12px;
     }
     
-    .ug-chord-diagrams {
-        gap: 1rem;
-        padding: 1rem;
+    .ug-section {
+        font-size: 0.8rem;
+        margin-top: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .ug-header, .ug-tabs, .ug-diagrams, .ug-strumming, .ug-content {
+        padding-left: 8px;
+        padding-right: 8px;
     }
     
-    .chord-diagram-grid {
-        grid-template-columns: repeat(5, 16px);
-        grid-template-rows: repeat(5, 16px);
+    .ug-title {
+        font-size: 1.1rem;
+    }
+    
+    .ug-tabs-buttons {
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+    
+    .ug-tab {
+        flex: 1 1 auto;
+        min-width: 80px;
+    }
+    
+    .ug-diagrams {
+        padding: 8px;
+    }
+    
+    .ug-chord-box {
+        min-width: 55px;
+        padding: 6px;
+    }
+    
+    .chord-svg {
+        width: 50px;
+        height: 65px;
+    }
+    
+    .strum {
+        width: 24px;
+        height: 32px;
+        font-size: 1rem;
+    }
+    
+    .ug-strumming-counts span {
+        width: 24px;
+    }
+    
+    .ug-chords, .ug-lyrics, .ug-chord, span.ug-chord {
+        font-size: 11px;
+    }
+    
+    .ug-content {
+        padding-top: 16px;
+        padding-bottom: 16px;
     }
 }
-
-/* Capo Indicator */
-.ug-capo {
-    background: var(--warning);
-    color: white;
-    padding: 0.5rem 1rem;
-    border-radius: var(--radius-sm);
-    font-weight: 600;
-    display: inline-block;
-    margin-bottom: 1rem;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-}
-
-/* Tuning Info */
-.ug-tuning {
-    color: var(--gray-600);
-    font-size: 0.875rem;
-    margin-bottom: 1rem;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-}
-

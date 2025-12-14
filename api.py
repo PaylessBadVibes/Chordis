@@ -30,6 +30,17 @@ except Exception as e:
     GENIUS_AVAILABLE = False
     lyricsgenius = None
 
+# Try to import pydub for audio format conversion (optional)
+try:
+    from pydub import AudioSegment
+    PYDUB_AVAILABLE = True
+except Exception as e:
+    print(f"Warning: Could not import pydub: {e}")
+    print("Install with: pip install pydub")
+    print("Note: pydub requires FFmpeg to be installed on your system")
+    PYDUB_AVAILABLE = False
+    AudioSegment = None
+
 # Load environment variables from .env file
 try:
     from dotenv import load_dotenv
@@ -44,6 +55,408 @@ from models import db, User, SavedAnalysis, Tutorial, SearchLog, SongRecognition
 from chord_recognition.utils import preprocess_audio
 from chord_recognition.model import CNNModel
 from chord_recognition.constants import CHORDS
+
+# ============================================
+# AUDIO CACHE CONFIGURATION
+# ============================================
+AUDIO_CACHE_DIR = Path('temp/audio_cache')
+AUDIO_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+CACHE_DURATION_HOURS = 2  # Cache audio files for 2 hours
+
+# ============================================
+# CHORDMINIAPP CONFIGURATION
+# ============================================
+# ChordMiniApp provides ML-based chord detection with 301 chord types
+# GitHub: https://github.com/ptnghia-j/ChordMiniApp
+# Use 127.0.0.1 for same-container communication (Railway)
+CHORDMINI_API_URL = os.getenv('CHORDMINI_API_URL', 'http://127.0.0.1:5001')
+CHORDMINI_TIMEOUT = int(os.getenv('CHORDMINI_TIMEOUT', '120'))  # seconds
+CHORDMINI_ENABLED = os.getenv('CHORDMINI_ENABLED', 'true').lower() == 'true'
+
+# Circuit breaker state for ChordMiniApp
+chordmini_circuit_breaker = {
+    'failures': 0,
+    'last_failure': None,
+    'open': False,
+    'cooldown_seconds': 60
+}
+
+def is_chordmini_available():
+    """Check if ChordMiniApp service is available with circuit breaker pattern"""
+    global chordmini_circuit_breaker
+    
+    if not CHORDMINI_ENABLED:
+        return False
+    
+    # Check circuit breaker
+    if chordmini_circuit_breaker['open']:
+        if chordmini_circuit_breaker['last_failure']:
+            elapsed = (datetime.now() - chordmini_circuit_breaker['last_failure']).total_seconds()
+            if elapsed < chordmini_circuit_breaker['cooldown_seconds']:
+                print(f"[CHORDMINI] Circuit breaker open, {chordmini_circuit_breaker['cooldown_seconds'] - elapsed:.0f}s until retry")
+                return False
+            else:
+                # Reset circuit breaker for retry
+                chordmini_circuit_breaker['open'] = False
+                chordmini_circuit_breaker['failures'] = 0
+    
+    try:
+        response = requests.get(f"{CHORDMINI_API_URL}/health", timeout=5)
+        if response.status_code == 200:
+            chordmini_circuit_breaker['failures'] = 0
+            chordmini_circuit_breaker['open'] = False
+            return True
+    except requests.exceptions.RequestException:
+        pass
+    
+    # Try root endpoint as fallback health check
+    try:
+        response = requests.get(f"{CHORDMINI_API_URL}/", timeout=5)
+        if response.status_code in [200, 404]:  # Server is responding
+            chordmini_circuit_breaker['failures'] = 0
+            chordmini_circuit_breaker['open'] = False
+            return True
+    except requests.exceptions.RequestException:
+        pass
+    
+    return False
+
+
+def record_chordmini_failure():
+    """Record a ChordMiniApp failure for circuit breaker"""
+    global chordmini_circuit_breaker
+    chordmini_circuit_breaker['failures'] += 1
+    chordmini_circuit_breaker['last_failure'] = datetime.now()
+    
+    if chordmini_circuit_breaker['failures'] >= 3:
+        chordmini_circuit_breaker['open'] = True
+        print(f"[CHORDMINI] Circuit breaker OPEN after {chordmini_circuit_breaker['failures']} failures")
+
+
+def normalize_chord_name(chord_name):
+    """
+    Normalize chord notation from ChordMiniApp format to standard format
+    
+    ChordMiniApp uses notation like:
+    - "C:maj" -> "C"
+    - "C:min" -> "Cm"
+    - "C:maj7" -> "Cmaj7"
+    - "C:min7" -> "Cm7"
+    - "N" -> "N" (no chord)
+    """
+    if not chord_name or chord_name == 'N':
+        return 'N'
+    
+    # Handle colon notation (C:min -> Cm)
+    if ':' in chord_name:
+        parts = chord_name.split(':')
+        root = parts[0]
+        quality = parts[1] if len(parts) > 1 else ''
+        
+        # Map quality names to standard notation
+        quality_map = {
+            'maj': '',
+            'min': 'm',
+            'minor': 'm',
+            'major': '',
+            'dim': 'dim',
+            'aug': 'aug',
+            'sus4': 'sus4',
+            'sus2': 'sus2',
+            'maj7': 'maj7',
+            'min7': 'm7',
+            '7': '7',
+            'dim7': 'dim7',
+            'hdim7': 'm7b5',
+            'minmaj7': 'mMaj7',
+            '9': '9',
+            'maj9': 'maj9',
+            'min9': 'm9',
+            'add9': 'add9',
+            '11': '11',
+            '13': '13',
+        }
+        
+        normalized_quality = quality_map.get(quality.lower(), quality)
+        return f"{root}{normalized_quality}"
+    
+    return chord_name
+
+
+def transform_chordmini_response(response_data):
+    """
+    Transform ChordMiniApp response to our chord format
+    
+    ChordMiniApp format may vary, this handles common formats:
+    - List of {chord, start, end} objects
+    - Dict with 'chords' key containing list
+    """
+    chords = []
+    
+    # Handle different response formats
+    if isinstance(response_data, list):
+        chord_list = response_data
+    elif isinstance(response_data, dict):
+        chord_list = response_data.get('chords', response_data.get('progression', []))
+    else:
+        print(f"[CHORDMINI] Unknown response format: {type(response_data)}")
+        return []
+    
+    for i, item in enumerate(chord_list):
+        if isinstance(item, dict):
+            # Extract chord name (handle different key names)
+            chord_name = item.get('chord', item.get('name', item.get('label', 'N')))
+            
+            # Clean up chord notation (ChordMiniApp may use "C:min" format)
+            chord_name = normalize_chord_name(chord_name)
+            
+            # Skip "no chord" entries
+            if chord_name == 'N':
+                continue
+            
+            # Extract timing
+            start_time = float(item.get('start', item.get('start_time', item.get('timestamp', i * 2))))
+            end_time = float(item.get('end', item.get('end_time', start_time + 2)))
+            
+            chords.append({
+                'chord': chord_name,
+                'name': chord_name,
+                'start_time': round(start_time, 2),
+                'end_time': round(end_time, 2),
+                'timestamp': round(start_time, 2),
+                'source': 'chordmini'
+            })
+        elif isinstance(item, str):
+            # Simple string chord names
+            chord_name = normalize_chord_name(item)
+            if chord_name != 'N':
+                chords.append({
+                    'chord': chord_name,
+                    'name': chord_name,
+                    'start_time': i * 2,
+                    'end_time': (i + 1) * 2,
+                    'timestamp': i * 2,
+                    'source': 'chordmini'
+                })
+    
+    print(f"[CHORDMINI] Transformed {len(chords)} chords")
+    return chords
+
+
+def get_chords_from_chordmini(audio_path, model='chord-cnn-lstm'):
+    """
+    Get chord recognition from ChordMiniApp service
+    
+    Args:
+        audio_path: Path to the audio file
+        model: Model to use ('chord-cnn-lstm' or 'btc')
+    
+    Returns:
+        List of chord dictionaries or None if failed
+    """
+    if not is_chordmini_available():
+        print("[CHORDMINI] Service not available, skipping")
+        return None
+    
+    try:
+        print(f"[CHORDMINI] Sending audio for chord recognition: {audio_path}")
+        print(f"[CHORDMINI] Using model: {model}")
+        
+        with open(audio_path, 'rb') as audio_file:
+            files = {'file': (os.path.basename(audio_path), audio_file, 'audio/mpeg')}
+            data = {'model': model}
+            
+            response = requests.post(
+                f"{CHORDMINI_API_URL}/api/recognize-chords",
+                files=files,
+                data=data,
+                timeout=CHORDMINI_TIMEOUT
+            )
+        
+        if response.status_code == 200:
+            result = response.json()
+            print(f"[CHORDMINI] Successfully received chord data")
+            
+            # Transform ChordMiniApp format to our format
+            chords = transform_chordmini_response(result)
+            return chords
+        else:
+            print(f"[CHORDMINI] Error response: {response.status_code} - {response.text[:200]}")
+            record_chordmini_failure()
+            return None
+            
+    except requests.exceptions.Timeout:
+        print(f"[CHORDMINI] Request timed out after {CHORDMINI_TIMEOUT}s")
+        record_chordmini_failure()
+        return None
+    except requests.exceptions.RequestException as e:
+        print(f"[CHORDMINI] Request failed: {e}")
+        record_chordmini_failure()
+        return None
+    except Exception as e:
+        print(f"[CHORDMINI] Unexpected error: {e}")
+        record_chordmini_failure()
+        return None
+
+
+def get_cache_filename(identifier):
+    """Generate a unique cache filename from an identifier (YouTube URL or search query)"""
+    file_hash = hashlib.md5(identifier.encode()).hexdigest()
+    return file_hash
+
+def is_cache_valid(cache_path):
+    """Check if a cached file exists and is not expired"""
+    if not os.path.exists(cache_path):
+        return False
+    
+    file_age_hours = (time.time() - os.path.getmtime(cache_path)) / 3600
+    return file_age_hours < CACHE_DURATION_HOURS
+
+def cleanup_old_cache():
+    """Delete cache files older than CACHE_DURATION_HOURS"""
+    try:
+        current_time = time.time()
+        deleted_count = 0
+        for cache_file in AUDIO_CACHE_DIR.glob('*'):
+            if cache_file.is_file():
+                file_age_hours = (current_time - os.path.getmtime(cache_file)) / 3600
+                if file_age_hours > CACHE_DURATION_HOURS:
+                    cache_file.unlink()
+                    deleted_count += 1
+        if deleted_count > 0:
+            print(f"[CACHE] Cleaned up {deleted_count} expired cache files")
+    except Exception as e:
+        print(f"[CACHE] Cleanup error: {e}")
+
+def cache_youtube_audio(youtube_url_or_query, is_search=False):
+    """
+    Download and cache YouTube audio
+    
+    Args:
+        youtube_url_or_query: YouTube URL or search query
+        is_search: If True, treat as search query instead of URL
+        
+    Returns:
+        tuple: (cache_path, youtube_webpage_url) or (None, None) on failure
+    """
+    # Generate cache filename
+    file_hash = get_cache_filename(youtube_url_or_query)
+    
+    # Check if already cached
+    for ext in ['.m4a', '.webm', '.opus', '.mp4', '.mp3', '.wav']:
+        cache_path = AUDIO_CACHE_DIR / f"{file_hash}{ext}"
+        if is_cache_valid(cache_path):
+            print(f"[CACHE] Using cached audio: {cache_path}")
+            return str(cache_path), None  # TODO: Store webpage URL in metadata
+    
+    # Not cached, download
+    print(f"[CACHE] Downloading audio for caching...")
+    
+    try:
+        ydl_opts = {
+            'format': 'bestaudio[ext=m4a]/bestaudio/best',
+            'quiet': True,
+            'no_warnings': True,
+            'outtmpl': str(AUDIO_CACHE_DIR / f"{file_hash}.%(ext)s"),
+        }
+        
+        if is_search:
+            ydl_opts['default_search'] = 'ytsearch1:'
+            search_query = youtube_url_or_query
+        else:
+            search_query = youtube_url_or_query
+        
+        youtube_webpage_url = None
+        
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            if is_search:
+                info = ydl.extract_info(f"ytsearch1:{search_query}", download=True)
+                if info and 'entries' in info and len(info['entries']) > 0:
+                    youtube_webpage_url = info['entries'][0].get('webpage_url')
+            else:
+                info = ydl.extract_info(search_query, download=True)
+                youtube_webpage_url = info.get('webpage_url') if info else None
+        
+        # Find the downloaded file
+        for ext in ['.m4a', '.webm', '.opus', '.mp4', '.mp3']:
+            cache_path = AUDIO_CACHE_DIR / f"{file_hash}{ext}"
+            if cache_path.exists():
+                print(f"[CACHE] Cached audio at: {cache_path}")
+                return str(cache_path), youtube_webpage_url
+        
+        print(f"[CACHE] Download completed but file not found")
+        return None, None
+        
+    except Exception as e:
+        print(f"[CACHE] Download error: {e}")
+        return None, None
+
+
+def convert_to_wav(input_path, output_path=None):
+    """
+    Convert any audio format to WAV for consistent processing
+    
+    Args:
+        input_path: Path to input audio file (MP3, M4A, FLAC, OGG, etc.)
+        output_path: Optional output path. If None, uses same name with .wav extension
+        
+    Returns:
+        Path to WAV file, or None if conversion failed
+    """
+    if output_path is None:
+        output_path = os.path.splitext(input_path)[0] + '.wav'
+    
+    # Check if already WAV
+    if input_path.lower().endswith('.wav'):
+        print(f"[CONVERT] File is already WAV: {input_path}")
+        return input_path
+    
+    # Try pydub first (most reliable)
+    if PYDUB_AVAILABLE:
+        try:
+            print(f"[CONVERT] Converting {input_path} to WAV using pydub...")
+            audio = AudioSegment.from_file(input_path)
+            audio.export(output_path, format='wav')
+            print(f"[CONVERT] Successfully converted to: {output_path}")
+            return output_path
+        except Exception as e:
+            print(f"[CONVERT] pydub conversion failed: {e}")
+    
+    # Try librosa as fallback
+    try:
+        print(f"[CONVERT] Trying librosa for conversion...")
+        audio_data, sr = librosa.load(input_path, sr=22050)
+        sf.write(output_path, audio_data, sr)
+        print(f"[CONVERT] Successfully converted to: {output_path}")
+        return output_path
+    except Exception as e:
+        print(f"[CONVERT] librosa conversion failed: {e}")
+    
+    print(f"[CONVERT] All conversion methods failed for: {input_path}")
+    return None
+
+
+def check_ffmpeg_available():
+    """Check if FFmpeg is available on the system"""
+    import subprocess
+    try:
+        result = subprocess.run(['ffmpeg', '-version'], capture_output=True, text=True)
+        if result.returncode == 0:
+            version_line = result.stdout.split('\n')[0] if result.stdout else "unknown version"
+            print(f"[FFMPEG] ✓ Available: {version_line}")
+            return True
+    except FileNotFoundError:
+        pass
+    except Exception as e:
+        print(f"[FFMPEG] Check error: {e}")
+    
+    print("[FFMPEG] ✗ Not found on system")
+    print("[FFMPEG] Some audio formats (M4A, AAC) may not be supported")
+    print("[FFMPEG] Install FFmpeg: https://ffmpeg.org/download.html")
+    return False
+
+# Check FFmpeg at startup
+FFMPEG_AVAILABLE = check_ffmpeg_available()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-change-this-in-production')
@@ -197,17 +610,54 @@ if GENIUS_AVAILABLE and GENIUS_ACCESS_TOKEN:
     try:
         genius = lyricsgenius.Genius(GENIUS_ACCESS_TOKEN, verbose=False, remove_section_headers=True)
         genius.timeout = 10
-        print("[OK] Genius API initialized")
+        
+        # Validate API token by testing with a popular song
+        print("[GENIUS] Initializing and validating API token...")
+        try:
+            test_song = genius.search_song("Bohemian Rhapsody", "Queen")
+            if test_song and test_song.lyrics:
+                print("[GENIUS] ✓ API token validated successfully!")
+                print(f"[GENIUS] ✓ Test search successful: '{test_song.title}' by '{test_song.artist}'")
+                print(f"[GENIUS] ✓ Ready to fetch lyrics from Genius database")
+            else:
+                print("[GENIUS] ⚠ API token works but test search returned no results")
+                print("[GENIUS] This might indicate rate limiting or API issues")
+        except Exception as test_err:
+            print(f"[GENIUS] ⚠ API validation test failed: {test_err}")
+            print(f"[GENIUS] API may still work, but there might be issues")
+            
     except Exception as e:
-        print(f"[WARN] Could not initialize Genius API: {e}")
+        print(f"[GENIUS] ✗ Could not initialize Genius API: {e}")
         genius = None
-        print("[INFO] Will use Whisper for lyrics")
+        print("[GENIUS] Will use Whisper for lyrics as fallback")
 else:
     genius = None
     if not GENIUS_AVAILABLE:
-        print("[INFO] Genius library not available (will use Whisper for lyrics)")
+        print("[GENIUS] ✗ lyricsgenius library not installed")
+        print("[GENIUS] Install with: pip install lyricsgenius")
+        print("[GENIUS] Will use Whisper for lyrics")
+    elif not GENIUS_ACCESS_TOKEN:
+        print("[GENIUS] ✗ GENIUS_ACCESS_TOKEN not configured in .env file")
+        print("[GENIUS] Get your free token at: https://genius.com/api-clients")
+        print("[GENIUS] Add to .env file: GENIUS_ACCESS_TOKEN=your_token_here")
+        print("[GENIUS] Will use Whisper for lyrics as fallback")
     else:
-        print("[INFO] Genius API not configured (will use Whisper for lyrics)")
+        print("[GENIUS] Genius API not configured (will use Whisper for lyrics)")
+
+# Initialize ChordMiniApp status (ML-based chord detection)
+print("\nChordMiniApp Status:")
+if CHORDMINI_ENABLED:
+    if is_chordmini_available():
+        print(f"[CHORDMINI] ✓ Service available at {CHORDMINI_API_URL}")
+        print("[CHORDMINI] Using ML-based chord detection (301 chord types)")
+    else:
+        print(f"[CHORDMINI] ✗ Service not available at {CHORDMINI_API_URL}")
+        print("[CHORDMINI] Will use rule-based detection as fallback (~48 chord types)")
+        print("[CHORDMINI] To enable: run start_servers.bat or manually start ChordMiniApp:")
+        print("[CHORDMINI]   cd chordmini/python_backend && python app.py")
+else:
+    print("[CHORDMINI] ✗ Disabled (CHORDMINI_ENABLED=false in .env)")
+    print("[CHORDMINI] Using rule-based chord detection")
 
 # Check Music Recognition APIs
 print("\nMusic Recognition Status:")
@@ -313,60 +763,330 @@ def extract_song_info_from_title(title):
     return None, title.strip()
 
 
-def get_lyrics_from_genius(song_title, artist=None):
-    """Fetch lyrics from Genius API"""
-    if not genius:
-        print("[WARN] Genius API not initialized")
-        return None
+def download_from_url(url, output_path=None):
+    """
+    Download audio from various platforms (YouTube, TikTok, Facebook, Instagram, SoundCloud, etc.)
+    using yt-dlp which supports 1000+ sites
+    
+    Args:
+        url: URL to download from (video or audio)
+        output_path: Optional output path for the audio file
+    
+    Returns:
+        Tuple of (success: bool, audio_path: str or None, metadata: dict or None)
+    """
+    if not output_path:
+        output_path = tempfile.mktemp(suffix='.m4a')
+    
+    # Detect platform for better logging
+    platform = 'Unknown'
+    if 'youtube.com' in url or 'youtu.be' in url:
+        platform = 'YouTube'
+    elif 'tiktok.com' in url:
+        platform = 'TikTok'
+    elif 'facebook.com' in url or 'fb.watch' in url:
+        platform = 'Facebook'
+    elif 'instagram.com' in url:
+        platform = 'Instagram'
+    elif 'soundcloud.com' in url:
+        platform = 'SoundCloud'
+    elif 'twitter.com' in url or 'x.com' in url:
+        platform = 'Twitter/X'
+    elif 'vimeo.com' in url:
+        platform = 'Vimeo'
+    
+    print(f"[DOWNLOAD] Detected platform: {platform}")
+    print(f"[DOWNLOAD] URL: {url}")
+    
+    ydl_opts = {
+        'format': 'bestaudio[ext=m4a]/bestaudio/best',  # Prefer m4a, fallback to best audio
+        'outtmpl': output_path.replace('.m4a', '.%(ext)s'),
+        'quiet': False,
+        'no_warnings': False,
+        'noplaylist': True,  # Only download single item, not playlist
+        'extract_flat': False,
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'm4a',
+        }],
+    }
     
     try:
-        search_query = f"{song_title}" + (f" {artist}" if artist else "")
-        print(f"[GENIUS] Searching for: {search_query}")
+        # Clean up playlist parameters from URL if present
+        if '&list=' in url:
+            url = url.split('&list=')[0]
+            print(f"[DOWNLOAD] Removed playlist parameter from URL")
         
-        if artist:
-            song = genius.search_song(song_title, artist)
-        else:
-            song = genius.search_song(song_title)
+        print(f"[DOWNLOAD] Extracting info...")
         
-        if song:
-            print(f"[GENIUS] Found match: '{song.title}' by '{song.artist}'")
-            if song.lyrics:
-                lyrics_length = len(song.lyrics)
-                print(f"[GENIUS] SUCCESS - Retrieved {lyrics_length} characters of lyrics")
-                return {
-                    'text': song.lyrics,
-                    'source': 'genius',
-                    'title': song.title,
-                    'artist': song.artist,
-                    'words': []
-                }
-            else:
-                print(f"[GENIUS] Song found but has no lyrics")
-                return None
-        else:
-            print(f"[GENIUS] No match found for '{song_title}' by '{artist}'")
-            print(f"[GENIUS] Possible reasons:")
-            print(f"  - Song not in Genius database")
-            print(f"  - Title/artist name mismatch")
-            print(f"  - Try more popular/mainstream songs")
-            return None
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            # Extract metadata first
+            info = ydl.extract_info(url, download=False)
+            
+            if not info:
+                print(f"[DOWNLOAD] ERROR: Could not extract video/audio info")
+                return False, None, None
+            
+            # Extract useful metadata
+            title = info.get('title', 'Unknown')
+            artist = info.get('uploader', '') or info.get('channel', '') or info.get('creator', '')
+            duration = info.get('duration', 0)
+            
+            print(f"[DOWNLOAD] Found: '{title}' by '{artist}' ({duration}s)")
+            print(f"[DOWNLOAD] Downloading audio...")
+            
+            # Download audio
+            ydl.download([url])
+            
+            # Find the downloaded file
+            # yt-dlp might change the extension based on what's available
+            possible_extensions = ['.m4a', '.mp3', '.webm', '.opus', '.wav']
+            base_path = output_path.replace('.m4a', '')
+            
+            actual_file = None
+            for ext in possible_extensions:
+                test_path = base_path + ext
+                if os.path.exists(test_path):
+                    actual_file = test_path
+                    break
+            
+            if not actual_file:
+                print(f"[DOWNLOAD] ERROR: Downloaded file not found")
+                return False, None, None
+            
+            print(f"[DOWNLOAD] ✓ SUCCESS! Downloaded to: {actual_file}")
+            
+            metadata = {
+                'title': title,
+                'artist': artist,
+                'duration': duration,
+                'platform': platform,
+                'url': url
+            }
+            
+            return True, actual_file, metadata
             
     except Exception as e:
-        print(f"[GENIUS ERROR] {e}")
+        print(f"[DOWNLOAD] ERROR: {e}")
         import traceback
         traceback.print_exc()
+        
+        # Provide helpful error messages
+        if 'Unsupported URL' in str(e):
+            print(f"[DOWNLOAD] Platform not supported or URL format invalid")
+        elif 'Video unavailable' in str(e):
+            print(f"[DOWNLOAD] Video/audio is unavailable or private")
+        elif 'No video formats' in str(e):
+            print(f"[DOWNLOAD] No audio/video streams available for this content")
+        
+        return False, None, None
+
+
+def get_lyrics_from_genius(song_title, artist=None):
+    """
+    Fetch lyrics from Genius API with enhanced error handling and retry logic
+    
+    Args:
+        song_title: Song title
+        artist: Artist name (optional)
+    
+    Returns:
+        Dictionary with lyrics data or None if not found
+    """
+    if not genius:
+        print("[GENIUS] ERROR: Genius API not initialized")
+        print("[GENIUS] Reason: GENIUS_ACCESS_TOKEN not configured in .env file")
+        print("[GENIUS] Get your free token at: https://genius.com/api-clients")
         return None
+    
+    def normalize_query(text):
+        """Normalize song/artist name for better matching"""
+        if not text:
+            return ""
+        # Remove common patterns that might interfere with search
+        text = re.sub(r'\(.*?\)', '', text)  # Remove parentheses content
+        text = re.sub(r'\[.*?\]', '', text)  # Remove brackets content
+        text = re.sub(r'\s+feat\..*$', '', text, flags=re.IGNORECASE)  # Remove "feat. artist"
+        text = re.sub(r'\s+ft\..*$', '', text, flags=re.IGNORECASE)  # Remove "ft. artist"
+        text = re.sub(r'\s+featuring.*$', '', text, flags=re.IGNORECASE)  # Remove "featuring artist"
+        text = re.sub(r'\s+-\s+.*$', '', text)  # Remove " - anything" suffix
+        text = re.sub(r'[^\w\s]', '', text)  # Remove special characters except spaces
+        text = ' '.join(text.split())  # Normalize whitespace
+        return text.strip()
+    
+    # Try multiple search strategies
+    search_strategies = []
+    
+    # Strategy 1: Original query
+    search_strategies.append({
+        'title': song_title,
+        'artist': artist,
+        'description': 'exact match'
+    })
+    
+    # Strategy 2: Normalized query
+    normalized_title = normalize_query(song_title)
+    normalized_artist = normalize_query(artist) if artist else None
+    if normalized_title != song_title or normalized_artist != artist:
+        search_strategies.append({
+            'title': normalized_title,
+            'artist': normalized_artist,
+            'description': 'normalized query'
+        })
+    
+    # Strategy 3: Title only (no artist)
+    if artist:
+        search_strategies.append({
+            'title': song_title,
+            'artist': None,
+            'description': 'title only'
+        })
+    
+    # Strategy 4: Try direct API call if lyricsgenius fails
+    use_direct_api = False
+    
+    # Try each strategy
+    for idx, strategy in enumerate(search_strategies):
+        try:
+            title = strategy['title']
+            art = strategy['artist']
+            desc = strategy['description']
+            
+            if not title or not title.strip():
+                continue
+            
+            search_query = f"{title}" + (f" {art}" if art else "")
+            print(f"[GENIUS] Strategy {idx + 1}/{len(search_strategies)}: {desc} - Searching: '{search_query}'")
+            
+            song = None
+            try:
+                if art:
+                    song = genius.search_song(title, art)
+                else:
+                    song = genius.search_song(title)
+            except Exception as search_err:
+                print(f"[GENIUS] lyricsgenius search failed: {search_err}")
+                use_direct_api = True
+                continue
+            
+            if song:
+                print(f"[GENIUS] ✓ Found: '{song.title}' by '{song.artist}'")
+                
+                if song.lyrics and len(song.lyrics) > 50:  # Ensure we have actual lyrics
+                    lyrics_text = song.lyrics
+                    
+                    # Clean up common Genius artifacts
+                    lyrics_text = re.sub(r'^\d+Embed$', '', lyrics_text, flags=re.MULTILINE)
+                    lyrics_text = re.sub(r'^You might also like', '', lyrics_text, flags=re.MULTILINE)
+                    lyrics_text = lyrics_text.strip()
+                    
+                    lyrics_length = len(lyrics_text)
+                    lines_count = len([l for l in lyrics_text.split('\n') if l.strip()])
+                    
+                    print(f"[GENIUS] ✓ SUCCESS! Retrieved {lyrics_length} chars, {lines_count} lines")
+                    print(f"[GENIUS] Song: '{song.title}' by '{song.artist}'")
+                    
+                    return {
+                        'text': lyrics_text,
+                        'source': 'genius',
+                        'title': song.title,
+                        'artist': song.artist,
+                        'words': []
+                    }
+                else:
+                    print(f"[GENIUS] ✗ Song found but no lyrics available")
+            else:
+                print(f"[GENIUS] ✗ No match found with this strategy")
+                
+        except Exception as e:
+            print(f"[GENIUS] Strategy {idx + 1} error: {e}")
+            import traceback
+            traceback.print_exc()
+            continue
+    
+    # Fallback: Try direct Genius API if configured
+    if use_direct_api and GENIUS_ACCESS_TOKEN:
+        try:
+            print(f"[GENIUS] Attempting direct API fallback...")
+            headers = {'Authorization': f'Bearer {GENIUS_ACCESS_TOKEN}'}
+            search_url = 'https://api.genius.com/search'
+            
+            query = f"{normalized_title} {normalized_artist}" if normalized_artist else normalized_title
+            params = {'q': query}
+            
+            print(f"[GENIUS] Direct API search: {query}")
+            response = requests.get(search_url, headers=headers, params=params, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                hits = data.get('response', {}).get('hits', [])
+                
+                if hits:
+                    # Get the first hit
+                    first_hit = hits[0]['result']
+                    song_api_path = first_hit.get('api_path')
+                    
+                    print(f"[GENIUS] Found via direct API: {first_hit.get('title')} by {first_hit.get('primary_artist', {}).get('name')}")
+                    print(f"[GENIUS] Note: Direct API doesn't provide lyrics - need to scrape from web")
+                    print(f"[GENIUS] Consider using lyricsgenius library for full functionality")
+                    
+            elif response.status_code == 401:
+                print(f"[GENIUS] ERROR: Invalid API token (401 Unauthorized)")
+                print(f"[GENIUS] Please check your GENIUS_ACCESS_TOKEN in .env file")
+            else:
+                print(f"[GENIUS] Direct API returned status {response.status_code}")
+                
+        except Exception as api_err:
+            print(f"[GENIUS] Direct API fallback failed: {api_err}")
+    
+    # All strategies failed
+    print(f"[GENIUS] ✗ FAILED - No lyrics found after trying {len(search_strategies)} strategies")
+    print(f"[GENIUS] Original query: '{song_title}' by '{artist}'")
+    print(f"[GENIUS] Possible reasons:")
+    print(f"  1. Song not in Genius database (try more popular songs)")
+    print(f"  2. Title/artist name spelling mismatch")
+    print(f"  3. Song too new (not yet added to Genius)")
+    print(f"  4. Genius API rate limit reached (wait a moment)")
+    print(f"  5. API token issues (check GENIUS_ACCESS_TOKEN)")
+    
+    return None
 
 def predict_chords_with_timestamps(filepath):
-    """Predict chords from an audio file with timestamps (ChordAI-style)"""
-    # Optimized: Use lower sample rate and mono for faster processing
-    y, sr = librosa.load(filepath, sr=11025, mono=True)
-    duration = librosa.get_duration(y=y, sr=sr)
+    """
+    Predict chords from an audio file with timestamps
+    
+    Priority:
+    1. ChordMiniApp (if available) - 301 chord types, ML-based
+    2. Rule-based detection (fallback) - ~48 chord types
+    """
+    print(f"\n[CHORD DETECTION] Starting analysis for: {filepath}")
+    
+    # Get audio duration first
+    y_temp, sr_temp = librosa.load(filepath, sr=11025, mono=True, duration=10)
+    y_full, sr = librosa.load(filepath, sr=11025, mono=True)
+    duration = librosa.get_duration(y=y_full, sr=sr)
+    
+    # STEP 1: Try ChordMiniApp first (most accurate, 301 chord types)
+    if CHORDMINI_ENABLED:
+        print("[CHORD DETECTION] Attempting ChordMiniApp (ML-based, 301 chords)...")
+        chordmini_chords = get_chords_from_chordmini(filepath)
+        if chordmini_chords and len(chordmini_chords) > 0:
+            print(f"[CHORD DETECTION] ✓ ChordMiniApp returned {len(chordmini_chords)} chords")
+            return {
+                'progression': chordmini_chords,
+                'duration': round(duration, 2),
+                'source': 'chordmini'
+            }
+        else:
+            print("[CHORD DETECTION] ChordMiniApp unavailable or returned no results")
+    
+    # STEP 2: Fallback to rule-based detection
+    print("[CHORD DETECTION] Using rule-based detection (fallback)...")
     
     # Optimized: Larger hop length for faster processing
     hop_length = 1024
     # Optimized: Use faster chroma_stft instead of chroma_cqt
-    chroma = librosa.feature.chroma_stft(y=y, sr=sr, hop_length=hop_length, n_fft=2048)
+    chroma = librosa.feature.chroma_stft(y=y_full, sr=sr, hop_length=hop_length, n_fft=2048)
     
     # Analyze chroma per segment with timestamps
     chord_progression = []
@@ -403,12 +1123,16 @@ def predict_chords_with_timestamps(filepath):
             chord_progression.append({
                 'chord': chord_name,
                 'start_time': round(start_time, 2),
-                'end_time': round(end_time, 2)
+                'end_time': round(end_time, 2),
+                'source': 'rule-based'
             })
+    
+    print(f"[CHORD DETECTION] ✓ Rule-based detection returned {len(chord_progression)} chords")
     
     return {
         'progression': chord_progression,
-        'duration': round(duration, 2)
+        'duration': round(duration, 2),
+        'source': 'rule-based'
     }
 
 def extract_lyrics_with_timestamps(filepath, song_info=None):
@@ -660,8 +1384,22 @@ def recognize_song(audio_file_path):
 @app.route("/api/recognize-song", methods=["POST"])
 def recognize_song_endpoint():
     """
-    Recognize a song from uploaded audio or YouTube URL
-    Returns song metadata (title, artist, album, etc.)
+    Recognize a song from uploaded audio file or URL
+    
+    Accepts:
+    - File upload (multipart/form-data with 'file' field)
+    - URL (JSON with 'url' field) - Supports:
+        * YouTube videos
+        * TikTok videos  
+        * Facebook videos
+        * Instagram videos/reels
+        * SoundCloud tracks
+        * Twitter/X videos
+        * Vimeo videos
+        * 1000+ other sites via yt-dlp
+    
+    Returns:
+        JSON with song metadata (title, artist, album, confidence, source)
     """
     print("=== RECOGNIZE SONG ENDPOINT CALLED ===")
     temp_file = None
@@ -709,36 +1447,56 @@ def recognize_song_endpoint():
                     'error': f'Conversion failed: {str(conv_error)}'
                 }), 500
             
-        elif request.is_json and request.json.get('youtube_url'):
-            # YouTube URL
-            youtube_url = request.json['youtube_url']
+        elif request.is_json:
+            data = request.json
+            url = data.get('url') or data.get('youtube_url')  # Support both 'url' and legacy 'youtube_url'
             
-            # Create temporary file for download
-            with tempfile.NamedTemporaryFile(delete=False, suffix='', dir='temp') as tmp:
-                temp_file = tmp.name
-            
-            # Download YouTube audio (only first 30 seconds for recognition)
-            print(f"Downloading from YouTube for recognition: {youtube_url}")
-            ydl_opts = {
-                'format': 'bestaudio/best',
-                'postprocessors': [{
-                    'key': 'FFmpegExtractAudio',
-                    'preferredcodec': 'wav',
-                }],
-                'outtmpl': temp_file,
-                'quiet': True,
-                'no_warnings': True,
-            }
-            
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                ydl.download([youtube_url])
-            
-            temp_file = temp_file + '.wav'
+            if url:
+                print(f"[RECOGNIZE] Received URL: {url}")
+                
+                # Download audio from URL (supports YouTube, TikTok, Facebook, Instagram, etc.)
+                success, audio_path, metadata = download_from_url(url)
+                
+                if not success or not audio_path:
+                    return jsonify({
+                        'success': False,
+                        'error': 'Failed to download audio from URL. Check if the link is valid and accessible.'
+                    }), 400
+                
+                temp_file = audio_path
+                print(f"[RECOGNIZE] Downloaded audio: {temp_file}")
+                
+                # Convert to WAV for ACRCloud (limit to 20 seconds)
+                try:
+                    print(f"[RECOGNIZE] Converting to WAV for recognition...")
+                    wav_file = temp_file + '.wav'
+                    y, sr = librosa.load(temp_file, sr=16000, mono=True, duration=20)
+                    sf.write(wav_file, y, sr, subtype='PCM_16')
+                    
+                    # Clean up original
+                    if os.path.exists(temp_file):
+                        os.remove(temp_file)
+                    temp_file = wav_file
+                    
+                    print(f"[RECOGNIZE] Converted successfully for recognition")
+                except Exception as conv_error:
+                    print(f"[RECOGNIZE] Conversion error: {conv_error}")
+                    if temp_file and os.path.exists(temp_file):
+                        os.remove(temp_file)
+                    return jsonify({
+                        'success': False,
+                        'error': f'Audio conversion failed: {str(conv_error)}'
+                    }), 500
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': 'Please provide either a file upload or url'
+                }), 400
             
         else:
             return jsonify({
                 'success': False,
-                'error': 'Please provide either a file upload or youtube_url'
+                'error': 'Please provide either a file upload or url'
             }), 400
         
         # Recognize the song
@@ -792,6 +1550,9 @@ def analyze():
     - YouTube URL (JSON with 'youtube_url' field)
     - Optional: song_title and artist for Genius lyrics
     """
+    # Cleanup old cache files
+    cleanup_old_cache()
+    
     temp_file = None
     song_info = None
     youtube_mode = False  # Track if we're analyzing YouTube URL
@@ -856,10 +1617,36 @@ def analyze():
             elif song_title:
                 song_info = song_title
             
-            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
-            file.save(temp_file.name)
-            temp_file.close()
-            audio_path = temp_file.name
+            # Get original file extension
+            original_ext = os.path.splitext(file.filename)[1].lower() if file.filename else '.mp3'
+            print(f"[UPLOAD] Received file: {file.filename} (format: {original_ext})")
+            
+            # Save original file first
+            temp_original = tempfile.NamedTemporaryFile(delete=False, suffix=original_ext)
+            file.save(temp_original.name)
+            temp_original.close()
+            
+            # Convert to WAV if needed
+            if original_ext != '.wav':
+                print(f"[UPLOAD] Converting {original_ext} to WAV for processing...")
+                wav_path = convert_to_wav(temp_original.name)
+                
+                if wav_path and os.path.exists(wav_path):
+                    audio_path = wav_path
+                    # Clean up original if different from converted
+                    if wav_path != temp_original.name:
+                        try:
+                            os.unlink(temp_original.name)
+                        except:
+                            pass
+                    print(f"[UPLOAD] Conversion successful: {audio_path}")
+                else:
+                    # Conversion failed, try using original anyway
+                    print(f"[UPLOAD] Conversion failed, attempting to use original file")
+                    audio_path = temp_original.name
+            else:
+                audio_path = temp_original.name
+                print(f"[UPLOAD] File is already WAV, no conversion needed")
             
         else:
             return jsonify({
@@ -1360,6 +2147,301 @@ def logout():
     return jsonify({"success": True})
 
 
+# ============================================
+# OTP EMAIL VERIFICATION
+# ============================================
+import random
+import string
+
+# Store OTPs in memory (in production, use Redis or database)
+otp_storage = {}
+
+def generate_otp():
+    """Generate a 6-digit OTP"""
+    return ''.join(random.choices(string.digits, k=6))
+
+def send_otp_email(email, otp, username=None):
+    """Send OTP verification email"""
+    try:
+        msg = Message(
+            subject='🎵 Chordis - Email Verification Code',
+            recipients=[email],
+            html=f'''
+            <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: white; border-radius: 16px; overflow: hidden;">
+                <div style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); padding: 30px; text-align: center;">
+                    <h1 style="margin: 0; font-size: 28px;">🎵 Chordis</h1>
+                    <p style="margin: 10px 0 0; opacity: 0.9;">Email Verification</p>
+                </div>
+                <div style="padding: 40px 30px; text-align: center;">
+                    <p style="font-size: 16px; color: #a0a0a0; margin-bottom: 20px;">
+                        {f"Hi {username}!" if username else "Hello!"} Your verification code is:
+                    </p>
+                    <div style="background: rgba(59, 130, 246, 0.2); border: 2px solid #3b82f6; border-radius: 12px; padding: 20px; margin: 20px 0;">
+                        <span style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #3b82f6;">{otp}</span>
+                    </div>
+                    <p style="font-size: 14px; color: #808080; margin-top: 20px;">
+                        This code expires in <strong>10 minutes</strong>.
+                    </p>
+                    <p style="font-size: 12px; color: #606060; margin-top: 30px;">
+                        If you didn't request this code, please ignore this email.
+                    </p>
+                </div>
+                <div style="background: rgba(0,0,0,0.3); padding: 20px; text-align: center; font-size: 12px; color: #808080;">
+                    © 2025 Chordis - AI Music Analysis
+                </div>
+            </div>
+            '''
+        )
+        mail.send(msg)
+        return True
+    except Exception as e:
+        print(f"[OTP] Failed to send email: {e}")
+        return False
+
+
+@app.route("/api/auth/check-email", methods=["POST"])
+def check_email():
+    """Check if email already exists in the system"""
+    data = request.get_json()
+    email = data.get('email', '').strip().lower()
+    
+    if not email:
+        return jsonify({"exists": False, "error": "Email is required"}), 400
+    
+    # Validate email format
+    import re
+    email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    if not re.match(email_regex, email):
+        return jsonify({"exists": False, "error": "Invalid email format"}), 400
+    
+    # Check if email exists
+    existing_user = User.query.filter_by(email=email).first()
+    
+    if existing_user:
+        return jsonify({
+            "exists": True, 
+            "message": "This email is already registered. Please sign in instead."
+        })
+    
+    return jsonify({"exists": False, "message": "Email is available"})
+
+
+@app.route("/api/auth/check-username", methods=["POST"])
+def check_username():
+    """Check if username already exists in the system"""
+    data = request.get_json()
+    username = data.get('username', '').strip()
+    
+    if not username:
+        return jsonify({"exists": False, "error": "Username is required"}), 400
+    
+    if len(username) < 3:
+        return jsonify({"exists": False, "error": "Username must be at least 3 characters"}), 400
+    
+    # Check if username exists
+    existing_user = User.query.filter_by(username=username).first()
+    
+    if existing_user:
+        return jsonify({
+            "exists": True, 
+            "message": "This username is already taken. Please choose another."
+        })
+    
+    return jsonify({"exists": False, "message": "Username is available"})
+
+
+@app.route("/api/auth/send-otp", methods=["POST"])
+def send_otp():
+    """Send OTP to user's email for verification"""
+    data = request.get_json()
+    email = data.get('email', '').strip().lower()
+    username = data.get('username', '').strip()
+    
+    if not email:
+        return jsonify({"error": "Email is required", "success": False}), 400
+    
+    # Validate email format
+    import re
+    email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    if not re.match(email_regex, email):
+        return jsonify({"error": "Invalid email format", "success": False}), 400
+    
+    # Check if username is taken
+    if username and User.query.filter_by(username=username).first():
+        return jsonify({"error": "Username already exists", "success": False}), 400
+    
+    # Check if email is taken
+    if User.query.filter_by(email=email).first():
+        return jsonify({"error": "Email already registered", "success": False}), 400
+    
+    # Generate OTP
+    otp = generate_otp()
+    
+    # Store OTP with expiration (10 minutes)
+    otp_storage[email] = {
+        'otp': otp,
+        'created': datetime.now(),
+        'username': username
+    }
+    
+    # Send OTP email
+    if send_otp_email(email, otp, username):
+        print(f"[OTP] Sent verification code to {email}")
+        return jsonify({
+            "success": True,
+            "message": "Verification code sent to your email"
+        })
+    else:
+        return jsonify({
+            "error": "Failed to send verification email. Please try again.",
+            "success": False
+        }), 500
+
+
+@app.route("/api/auth/verify-otp", methods=["POST"])
+def verify_otp():
+    """Verify OTP and complete registration"""
+    data = request.get_json()
+    email = data.get('email', '').strip().lower()
+    otp = data.get('otp', '').strip()
+    username = data.get('username', '').strip()
+    password = data.get('password', '')
+    is_encrypted = data.get('encrypted', False)
+    
+    # Decrypt password if encrypted
+    if is_encrypted and request.headers.get('X-Encrypted') == 'true':
+        try:
+            password = decrypt_client_data(password)
+            print("[SECURITY] Decrypted registration password successfully")
+        except Exception as e:
+            print(f"[WARN] Password decryption failed, using as-is: {e}")
+    
+    if not email or not otp:
+        return jsonify({"error": "Email and OTP are required", "success": False}), 400
+    
+    # Check if OTP exists
+    if email not in otp_storage:
+        return jsonify({"error": "No verification code found. Please request a new one.", "success": False}), 400
+    
+    stored = otp_storage[email]
+    
+    # Check expiration (10 minutes)
+    if (datetime.now() - stored['created']).total_seconds() > 600:
+        del otp_storage[email]
+        return jsonify({"error": "Verification code expired. Please request a new one.", "success": False}), 400
+    
+    # Verify OTP
+    if stored['otp'] != otp:
+        return jsonify({"error": "Invalid verification code", "success": False}), 400
+    
+    # OTP verified - create user account
+    try:
+        # Check again if user exists (race condition prevention)
+        if User.query.filter_by(username=username).first():
+            return jsonify({"error": "Username already exists", "success": False}), 400
+        if User.query.filter_by(email=email).first():
+            return jsonify({"error": "Email already registered", "success": False}), 400
+        
+        # Create user with verified email
+        user = User(username=username, email=email, email_verified=True)
+        user.set_password(password)
+        
+        db.session.add(user)
+        db.session.commit()
+        
+        # Clean up OTP
+        del otp_storage[email]
+        
+        # Log user in
+        login_user(user)
+        
+        print(f"[OTP] User {username} registered successfully with verified email")
+        
+        return jsonify({
+            "success": True,
+            "message": "Account created successfully!",
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "email_verified": True
+            }
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"[OTP] Registration error: {e}")
+        return jsonify({"error": "Registration failed. Please try again.", "success": False}), 500
+
+
+@app.route("/api/auth/firebase", methods=["POST"])
+def firebase_auth():
+    """Handle Firebase authentication (Google sign-in)"""
+    data = request.get_json()
+    
+    id_token = data.get('idToken')
+    provider = data.get('provider', 'google')
+    email = data.get('email', '').strip().lower()
+    display_name = data.get('displayName', '')
+    photo_url = data.get('photoURL', '')
+    
+    if not email:
+        return jsonify({"error": "Email is required", "success": False}), 400
+    
+    try:
+        # Check if user exists
+        user = User.query.filter_by(email=email).first()
+        
+        if user:
+            # Existing user - log them in
+            login_user(user)
+            print(f"[FIREBASE] Existing user logged in: {user.username}")
+        else:
+            # New user - create account
+            # Generate username from email or display name
+            base_username = display_name.replace(' ', '').lower() if display_name else email.split('@')[0]
+            username = base_username
+            
+            # Ensure unique username
+            counter = 1
+            while User.query.filter_by(username=username).first():
+                username = f"{base_username}{counter}"
+                counter += 1
+            
+            # Create user with verified email (OAuth means email is verified)
+            user = User(
+                username=username,
+                email=email,
+                email_verified=True
+            )
+            # Set a random password (user can reset if needed)
+            import secrets
+            user.set_password(secrets.token_urlsafe(32))
+            
+            db.session.add(user)
+            db.session.commit()
+            
+            login_user(user)
+            print(f"[FIREBASE] New user created via {provider}: {username}")
+        
+        return jsonify({
+            "success": True,
+            "message": f"Successfully signed in with {provider.title()}!",
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "email_verified": user.email_verified,
+                "is_admin": user.is_admin
+            }
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"[FIREBASE] Auth error: {e}")
+        return jsonify({"error": "Authentication failed. Please try again.", "success": False}), 500
+
+
 @app.route("/api/current-user", methods=["GET"])
 def current_user_info():
     """Get current logged in user info"""
@@ -1688,6 +2770,9 @@ def update_saved_analysis(analysis_id):
 @app.route("/api/search-and-analyze", methods=["POST"])
 def search_and_analyze():
     """Search for a song and get its lyrics and download audio temporarily"""
+    # Cleanup old cache files
+    cleanup_old_cache()
+    
     data = request.get_json()
     
     title = data.get('title', '')
@@ -1762,17 +2847,81 @@ def search_and_analyze():
         import traceback
         traceback.print_exc()
     
-    # Generate chord progression (placeholder - could integrate with chord database)
-    chords = [
-        {'chord': 'C', 'start_time': 0, 'end_time': 15},
-        {'chord': 'G', 'start_time': 15, 'end_time': 30},
-        {'chord': 'Am', 'start_time': 30, 'end_time': 45},
-        {'chord': 'F', 'start_time': 45, 'end_time': 60},
-        {'chord': 'C', 'start_time': 60, 'end_time': 75},
-        {'chord': 'G', 'start_time': 75, 'end_time': 90},
-        {'chord': 'Am', 'start_time': 90, 'end_time': 105},
-        {'chord': 'F', 'start_time': 105, 'end_time': 120},
-    ]
+    # Generate chord progression - try ChordMiniApp first, then rule-based analysis
+    chords = []
+    detected_key = "C Major"
+    detected_tempo = 120
+    
+    # STEP 1: Try ChordMiniApp for ML-based chord detection (301 chord types)
+    if CHORDMINI_ENABLED and 'downloaded_file' in dir() and downloaded_file and os.path.exists(downloaded_file):
+        try:
+            print(f"[CHORDS] Attempting ChordMiniApp ML-based detection...")
+            chordmini_chords = get_chords_from_chordmini(downloaded_file)
+            if chordmini_chords and len(chordmini_chords) > 0:
+                print(f"[CHORDS] ✓ ChordMiniApp returned {len(chordmini_chords)} chords")
+                chords = chordmini_chords
+        except Exception as e:
+            print(f"[CHORDS] ChordMiniApp failed: {e}")
+    
+    # STEP 2: If no ChordMiniApp results and audio was downloaded, use rule-based analysis
+    if not chords and 'downloaded_file' in dir() and downloaded_file and os.path.exists(downloaded_file):
+        try:
+            print(f"[CHORDS] Analyzing downloaded audio file for chords...")
+            # Use our chord detection on the audio
+            audio_data, sr = librosa.load(downloaded_file, sr=22050, duration=180)
+            
+            # Extract chroma features
+            chroma = librosa.feature.chroma_cqt(y=audio_data, sr=sr, hop_length=512)
+            
+            # Segment the audio and detect chords
+            segment_duration = 2.0  # 2 seconds per segment
+            hop_samples = int(segment_duration * sr / 512)
+            
+            for i in range(0, chroma.shape[1], hop_samples):
+                segment_chroma = np.mean(chroma[:, i:i+hop_samples], axis=1)
+                chord_idx = chord_model.predict_from_chroma(segment_chroma)
+                chord_name = CHORDS[chord_idx] if chord_idx < len(CHORDS) else 'C'
+                
+                start_time = i * 512 / sr
+                end_time = min((i + hop_samples) * 512 / sr, len(audio_data) / sr)
+                
+                # Avoid duplicate consecutive chords
+                if not chords or chords[-1]['chord'] != chord_name:
+                    chords.append({
+                        'chord': chord_name,
+                        'name': chord_name,
+                        'start_time': start_time,
+                        'end_time': end_time,
+                        'timestamp': start_time
+                    })
+            
+            # Detect key and tempo
+            try:
+                tempo, _ = librosa.beat.beat_track(y=audio_data, sr=sr)
+                detected_tempo = int(tempo) if tempo else 120
+                print(f"[CHORDS] Detected tempo: {detected_tempo} BPM")
+            except:
+                pass
+                
+            print(f"[CHORDS] Detected {len(chords)} unique chord changes from audio")
+            
+        except Exception as e:
+            print(f"[CHORDS] Audio analysis failed: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    # STEP 3: Fallback - generate common progression if nothing else worked
+    if not chords:
+        print(f"[CHORDS] Using fallback chord progression")
+        fallback_progression = ['C', 'G', 'Am', 'F', 'C', 'G', 'Am', 'F']
+        for i, chord_name in enumerate(fallback_progression):
+            chords.append({
+                'chord': chord_name,
+                'name': chord_name,
+                'start_time': i * 15,
+                'end_time': (i + 1) * 15,
+                'timestamp': i * 15
+            })
     
     # Prepare response
     lyrics_list = []
@@ -1795,8 +2944,8 @@ def search_and_analyze():
         "lyrics": lyrics_list,
         "lyrics_source": lyrics_source,
         "has_lyrics": len(lyrics_list) > 0,
-        "key": "C Major",
-        "tempo": 120,
+        "key": detected_key,
+        "tempo": detected_tempo,
         "duration": len(lyrics_list) * 10 if lyrics_list else 180,
         "audio_url": audio_url,  # Downloaded audio served from our server
         "youtube_url": audio_url,  # Kept for backward compatibility
@@ -1848,6 +2997,98 @@ def serve_temp_audio(filename):
             
     except Exception as e:
         print(f"[SERVE ERROR] {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/audio/<filename>")
+def serve_cached_audio(filename):
+    """Serve cached audio files with Range header support for seeking"""
+    try:
+        print(f"[CACHE SERVE] Request for cached audio: {filename}")
+        
+        # Find the file in cache directory
+        cache_path = AUDIO_CACHE_DIR / filename
+        
+        if not cache_path.exists():
+            # Try without extension prefix
+            for ext in ['.m4a', '.webm', '.opus', '.mp4', '.mp3', '.wav']:
+                test_path = AUDIO_CACHE_DIR / f"{filename}{ext}"
+                if test_path.exists():
+                    cache_path = test_path
+                    break
+        
+        if not cache_path.exists():
+            print(f"[CACHE SERVE ERROR] File not found: {cache_path}")
+            return jsonify({"error": "Audio file not found"}), 404
+        
+        # Determine mimetype
+        ext = cache_path.suffix.lower()
+        mimetypes_map = {
+            '.m4a': 'audio/mp4',
+            '.mp4': 'audio/mp4',
+            '.webm': 'audio/webm',
+            '.opus': 'audio/opus',
+            '.mp3': 'audio/mpeg',
+            '.wav': 'audio/wav'
+        }
+        mimetype = mimetypes_map.get(ext, 'audio/mpeg')
+        
+        file_size = cache_path.stat().st_size
+        
+        # Handle Range requests for seeking support
+        range_header = request.headers.get('Range')
+        
+        if range_header:
+            # Parse Range header
+            byte_range = range_header.replace('bytes=', '').split('-')
+            start = int(byte_range[0]) if byte_range[0] else 0
+            end = int(byte_range[1]) if byte_range[1] else file_size - 1
+            
+            if start >= file_size:
+                return Response(status=416)  # Range Not Satisfiable
+            
+            end = min(end, file_size - 1)
+            length = end - start + 1
+            
+            def generate_range():
+                with open(cache_path, 'rb') as f:
+                    f.seek(start)
+                    remaining = length
+                    while remaining > 0:
+                        chunk_size = min(8192, remaining)
+                        chunk = f.read(chunk_size)
+                        if not chunk:
+                            break
+                        remaining -= len(chunk)
+                        yield chunk
+            
+            response = Response(
+                generate_range(),
+                status=206,
+                mimetype=mimetype,
+                direct_passthrough=True
+            )
+            response.headers['Content-Range'] = f'bytes {start}-{end}/{file_size}'
+            response.headers['Accept-Ranges'] = 'bytes'
+            response.headers['Content-Length'] = length
+            
+            print(f"[CACHE SERVE] Serving range {start}-{end}/{file_size}")
+            return response
+        else:
+            # Serve full file
+            print(f"[CACHE SERVE] Serving full file: {cache_path} ({file_size} bytes)")
+            response = send_from_directory(
+                str(AUDIO_CACHE_DIR),
+                filename,
+                mimetype=mimetype
+            )
+            response.headers['Accept-Ranges'] = 'bytes'
+            return response
+            
+    except Exception as e:
+        print(f"[CACHE SERVE ERROR] {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 
@@ -2796,7 +4037,104 @@ def serve_static(filename):
     return send_from_directory('static', filename)
 
 
+def start_chordmini_service():
+    """Auto-start ChordMiniApp service if available"""
+    import subprocess
+    import sys
+    
+    # Define possible ChordMini paths
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    chordmini_paths = [
+        os.path.join(script_dir, 'chordmini', 'python_backend', 'app.py'),
+        os.path.join(script_dir, '..', 'chordmini', 'python_backend', 'app.py'),
+        os.path.join(script_dir, 'ChordMiniApp', 'python_backend', 'app.py'),
+        # Also check Documents/nns folder (common installation location)
+        r'C:\Users\Administrator\Documents\nns\chordmini\python_backend\app.py',
+        os.path.expanduser('~/Documents/nns/chordmini/python_backend/app.py'),
+    ]
+    
+    chordmini_app = None
+    chordmini_dir = None
+    
+    for path in chordmini_paths:
+        if os.path.exists(path):
+            chordmini_app = path
+            chordmini_dir = os.path.dirname(path)
+            break
+    
+    if not chordmini_app:
+        print("[CHORDMINI-AUTO] ChordMiniApp not found in expected locations:")
+        for p in chordmini_paths:
+            print(f"  - {p}")
+        print("[CHORDMINI-AUTO] To install: git clone https://github.com/ptnghia-j/ChordMiniApp.git chordmini")
+        return None
+    
+    # Check if ChordMini is already running
+    try:
+        response = requests.get(f"{CHORDMINI_API_URL}/", timeout=2)
+        if response.status_code in [200, 404]:
+            print(f"[CHORDMINI-AUTO] ✓ Already running at {CHORDMINI_API_URL}")
+            return None
+    except:
+        pass
+    
+    print(f"[CHORDMINI-AUTO] Starting ChordMiniApp from: {chordmini_app}")
+    
+    try:
+        # Start ChordMini as a background process
+        if sys.platform == 'win32':
+            # Windows - use CREATE_NEW_CONSOLE for separate window
+            process = subprocess.Popen(
+                [sys.executable, 'app.py'],
+                cwd=chordmini_dir,
+                creationflags=subprocess.CREATE_NEW_CONSOLE,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+        else:
+            # Linux/Mac
+            process = subprocess.Popen(
+                [sys.executable, 'app.py'],
+                cwd=chordmini_dir,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                start_new_session=True
+            )
+        
+        print(f"[CHORDMINI-AUTO] ✓ Started ChordMiniApp (PID: {process.pid})")
+        
+        # Wait a moment for it to initialize
+        import time
+        time.sleep(3)
+        
+        # Verify it started
+        try:
+            response = requests.get(f"{CHORDMINI_API_URL}/", timeout=5)
+            if response.status_code in [200, 404]:
+                print(f"[CHORDMINI-AUTO] ✓ ChordMiniApp is responding at {CHORDMINI_API_URL}")
+                return process
+        except:
+            print(f"[CHORDMINI-AUTO] ⚠ ChordMiniApp started but not responding yet")
+            print(f"[CHORDMINI-AUTO] It may still be loading models...")
+        
+        return process
+        
+    except Exception as e:
+        print(f"[CHORDMINI-AUTO] ✗ Failed to start ChordMiniApp: {e}")
+        return None
+
+
 if __name__ == "__main__":
+    # Auto-start ChordMiniApp if available (only for local development, not production)
+    chordmini_process = None
+    is_reloader = os.environ.get('WERKZEUG_RUN_MAIN') == 'true'
+    is_production = os.environ.get('RAILWAY_ENVIRONMENT') or os.environ.get('FLASK_ENV') == 'production'
+    
+    if CHORDMINI_ENABLED and not is_reloader and not is_production:
+        chordmini_process = start_chordmini_service()
+    elif is_production:
+        print("[CHORDMINI-AUTO] Skipped - Running in production mode")
+    
     # Create database tables
     with app.app_context():
         db.create_all()
@@ -2811,7 +4149,21 @@ if __name__ == "__main__":
     print("="*50)
     print(f"Access the app at: http://localhost:{port}/")
     print(f"Debug mode: {debug_mode}")
+    if chordmini_process:
+        print(f"ChordMiniApp: Running (PID {chordmini_process.pid})")
     print("Press Ctrl+C to stop the server")
     print("="*50 + "\n")
     
-    app.run(host="0.0.0.0", port=port, debug=debug_mode)
+    try:
+        app.run(host="0.0.0.0", port=port, debug=debug_mode)
+    finally:
+        # Clean up ChordMini process on exit
+        if chordmini_process:
+            print("\n[CLEANUP] Stopping ChordMiniApp...")
+            try:
+                chordmini_process.terminate()
+                chordmini_process.wait(timeout=5)
+                print("[CLEANUP] ChordMiniApp stopped")
+            except:
+                chordmini_process.kill()
+                print("[CLEANUP] ChordMiniApp force killed")
