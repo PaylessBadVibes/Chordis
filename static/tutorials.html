@@ -335,7 +335,11 @@
             <a href="/" class="logo">
                 <i class="fas fa-music"></i> Chordis
             </a>
-            <div class="nav-links">
+            <button class="mobile-menu-toggle" onclick="toggleMobileMenu()" aria-label="Toggle menu">
+                <i class="fas fa-bars" id="menuIcon"></i>
+            </button>
+            <div class="mobile-nav-overlay" id="mobileOverlay" onclick="toggleMobileMenu()"></div>
+            <div class="nav-links" id="navLinks">
                 <a href="/">Home</a>
                 <a href="/chordai">ChordAI</a>
                 <a href="/realtime">Music Recognizer</a>
@@ -343,7 +347,7 @@
                 <a href="/tutorials" class="active">Tutorials</a>
                 <a href="/analytics">Analytics</a>
             </div>
-            <div class="auth-buttons">
+            <div class="auth-buttons" id="authButtons">
                 <div id="auth-buttons">
                     <button class="btn btn-secondary" onclick="window.location.href='/auth'">
                         <i class="fas fa-user"></i> Sign In
@@ -434,6 +438,28 @@
         let filteredTutorials = [];
         let currentLevel = 'all';
         let currentType = 'all';
+        
+        // Mobile Menu Toggle
+        function toggleMobileMenu() {
+            const navLinks = document.getElementById('navLinks');
+            const authButtons = document.getElementById('authButtons');
+            const overlay = document.getElementById('mobileOverlay');
+            const menuIcon = document.getElementById('menuIcon');
+            
+            navLinks.classList.toggle('active');
+            if (authButtons) authButtons.classList.toggle('active');
+            if (overlay) overlay.classList.toggle('active');
+            
+            if (navLinks.classList.contains('active')) {
+                menuIcon.classList.remove('fa-bars');
+                menuIcon.classList.add('fa-times');
+                document.body.style.overflow = 'hidden';
+            } else {
+                menuIcon.classList.remove('fa-times');
+                menuIcon.classList.add('fa-bars');
+                document.body.style.overflow = '';
+            }
+        }
         
         // Auth check
         async function checkAuth() {

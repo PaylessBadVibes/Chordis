@@ -742,69 +742,6 @@
             border-color: var(--primary-500);
             transform: translateY(-2px);
         }
-        
-        /* Mobile Navigation */
-        .mobile-menu-toggle {
-            display: none;
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 0.5rem;
-            z-index: 1001;
-        }
-        
-        @media (max-width: 768px) {
-            nav {
-                padding: 1rem;
-            }
-            
-            .nav-content {
-                position: relative;
-            }
-            
-            .mobile-menu-toggle {
-                display: block;
-            }
-            
-            .nav-links {
-                position: fixed;
-                top: 0;
-                left: -100%;
-                width: 280px;
-                height: 100vh;
-                background: #0f0f23;
-                flex-direction: column;
-                padding: 5rem 2rem 2rem;
-                gap: 1.5rem;
-                transition: left 0.25s ease;
-                z-index: 1000;
-                border-right: 1px solid rgba(255, 255, 255, 0.1);
-                overflow-y: auto;
-            }
-            
-            .nav-links.active {
-                left: 0;
-            }
-            
-            .nav-links a {
-                font-size: 1.125rem;
-                padding: 0.75rem 0;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            }
-            
-            .auth-buttons {
-                flex-direction: column;
-                gap: 0.5rem;
-                width: 100%;
-            }
-            
-            .auth-buttons .btn {
-                width: 100%;
-                justify-content: center;
-            }
-        }
     </style>
 </head>
 <body>
@@ -814,8 +751,9 @@
                 <i class="fas fa-music"></i> Chordis
             </a>
             <button class="mobile-menu-toggle" onclick="toggleMobileMenu()" aria-label="Toggle menu">
-                <i class="fas fa-bars"></i>
+                <i class="fas fa-bars" id="menuIcon"></i>
             </button>
+            <div class="mobile-nav-overlay" id="mobileOverlay" onclick="toggleMobileMenu()"></div>
             <div class="nav-links" id="navLinks">
                 <a href="/">Home</a>
                 <a href="/chordai" class="active">ChordAI</a>
@@ -824,7 +762,7 @@
                 <a href="/tutorials">Tutorials</a>
                 <a href="/analytics">Analytics</a>
             </div>
-            <div class="auth-buttons">
+            <div class="auth-buttons" id="authButtons">
                 <div id="auth-buttons">
                     <button class="btn btn-secondary" onclick="window.location.href='/auth'">
                         <i class="fas fa-user"></i> Sign In
@@ -1814,31 +1752,25 @@
         // Mobile Menu Toggle
         function toggleMobileMenu() {
             const navLinks = document.getElementById('navLinks');
-            const menuIcon = document.querySelector('.mobile-menu-toggle i');
+            const authButtons = document.getElementById('authButtons');
+            const overlay = document.getElementById('mobileOverlay');
+            const menuIcon = document.getElementById('menuIcon');
             
             navLinks.classList.toggle('active');
+            if (authButtons) authButtons.classList.toggle('active');
+            if (overlay) overlay.classList.toggle('active');
             
             // Toggle icon between bars and times
             if (navLinks.classList.contains('active')) {
                 menuIcon.classList.remove('fa-bars');
                 menuIcon.classList.add('fa-times');
+                document.body.style.overflow = 'hidden';
             } else {
                 menuIcon.classList.remove('fa-times');
                 menuIcon.classList.add('fa-bars');
+                document.body.style.overflow = '';
             }
         }
-        
-        // Close mobile menu when clicking outside
-        document.addEventListener('click', (e) => {
-            const navLinks = document.getElementById('navLinks');
-            const menuToggle = document.querySelector('.mobile-menu-toggle');
-            
-            if (navLinks && navLinks.classList.contains('active')) {
-                if (!navLinks.contains(e.target) && !menuToggle.contains(e.target)) {
-                    toggleMobileMenu();
-                }
-            }
-        });
         
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {

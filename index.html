@@ -6,7 +6,7 @@
     <title>Chordis - AI Music Analysis</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/ultimate-guitar-style.css?v=4.0">
+    <link rel="stylesheet" href="/css/ultimate-guitar-style.css?v=3.0">
     <style>
         * {
             margin: 0;
@@ -1498,8 +1498,9 @@
                 Chordis
             </a>
             <button class="mobile-menu-toggle" onclick="toggleMobileMenu()" aria-label="Toggle menu">
-                <i class="fas fa-bars"></i>
+                <i class="fas fa-bars" id="menuIcon"></i>
             </button>
+            <div class="mobile-nav-overlay" id="mobileOverlay" onclick="toggleMobileMenu()"></div>
             <div class="nav-links" id="navLinks">
                 <a href="/" class="active">Home</a>
                 <a href="/chordai">ChordAI</a>
@@ -1511,7 +1512,7 @@
                     <i class="fas fa-user-shield"></i> Admin
                 </a>
             </div>
-            <div class="nav-buttons">
+            <div class="nav-buttons" id="authButtons">
                 <!-- Not Logged In -->
                 <div id="auth-buttons">
                     <button class="btn btn-outline" onclick="window.location.href='/auth'">
@@ -1956,8 +1957,8 @@
     <audio id="audio"></audio>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="/js/ultimate-guitar-display.js?v=3.0"></script>
-    <script src="/js/chord-pdf-export.js?v=3.0"></script>
+    <script src="/js/ultimate-guitar-display.js?v=2.1"></script>
+    <script src="/js/chord-pdf-export.js?v=2.1"></script>
     <script>
         // Tab switching
         document.querySelectorAll('.tab').forEach(tab => {
@@ -3497,31 +3498,25 @@
         // Mobile Menu Toggle
         function toggleMobileMenu() {
             const navLinks = document.getElementById('navLinks');
-            const menuIcon = document.querySelector('.mobile-menu-toggle i');
+            const authButtons = document.getElementById('authButtons');
+            const overlay = document.getElementById('mobileOverlay');
+            const menuIcon = document.getElementById('menuIcon');
             
             navLinks.classList.toggle('active');
+            if (authButtons) authButtons.classList.toggle('active');
+            if (overlay) overlay.classList.toggle('active');
             
             // Toggle icon between bars and times
             if (navLinks.classList.contains('active')) {
                 menuIcon.classList.remove('fa-bars');
                 menuIcon.classList.add('fa-times');
+                document.body.style.overflow = 'hidden';
             } else {
                 menuIcon.classList.remove('fa-times');
                 menuIcon.classList.add('fa-bars');
+                document.body.style.overflow = '';
             }
         }
-        
-        // Close mobile menu when clicking outside
-        document.addEventListener('click', (e) => {
-            const navLinks = document.getElementById('navLinks');
-            const menuToggle = document.querySelector('.mobile-menu-toggle');
-            
-            if (navLinks && navLinks.classList.contains('active')) {
-                if (!navLinks.contains(e.target) && !menuToggle.contains(e.target)) {
-                    toggleMobileMenu();
-                }
-            }
-        });
     </script>
 </body>
 </html>
