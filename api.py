@@ -71,9 +71,9 @@ CACHE_DURATION_HOURS = 2  # Cache audio files for 2 hours
 # Use 127.0.0.1 for same-container communication (Railway)
 CHORDMINI_API_URL = os.getenv('CHORDMINI_API_URL', 'http://127.0.0.1:5001')
 CHORDMINI_TIMEOUT = int(os.getenv('CHORDMINI_TIMEOUT', '120'))  # seconds
-# Enable ChordMini - set to true for ML-based chord detection
+# ChordMini - disabled on Railway due to complex dependencies
 IS_RAILWAY = bool(os.getenv('RAILWAY_ENVIRONMENT') or os.getenv('RAILWAY_SERVICE_NAME'))
-CHORDMINI_ENABLED = os.getenv('CHORDMINI_ENABLED', 'true').lower() == 'true'
+CHORDMINI_ENABLED = os.getenv('CHORDMINI_ENABLED', 'false' if IS_RAILWAY else 'true').lower() == 'true'
 
 # Circuit breaker state for ChordMiniApp
 chordmini_circuit_breaker = {
