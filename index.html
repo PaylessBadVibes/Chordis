@@ -3446,30 +3446,14 @@
                         </div>
                     `).join('');
                 } else {
-                    // Show sample trending songs if no data
-                    const sampleSongs = [
-                        { title: 'Blinding Lights', artist: 'The Weeknd', count: 152 },
-                        { title: 'Shape of You', artist: 'Ed Sheeran', count: 134 },
-                        { title: 'Dance Monkey', artist: 'Tones and I', count: 128 },
-                        { title: 'Someone Like You', artist: 'Adele', count: 115 },
-                        { title: 'Perfect', artist: 'Ed Sheeran', count: 108 },
-                        { title: 'Uptown Funk', artist: 'Bruno Mars', count: 102 },
-                        { title: 'Thinking Out Loud', artist: 'Ed Sheeran', count: 95 },
-                        { title: 'Closer', artist: 'The Chainsmokers', count: 89 },
-                        { title: 'Despacito', artist: 'Luis Fonsi', count: 84 },
-                        { title: 'Rolling in the Deep', artist: 'Adele', count: 78 }
-                    ];
-                    
-                    grid.innerHTML = sampleSongs.map((song, index) => `
-                        <div class="trending-card" onclick="analyzeTrendingSong('${encodeURIComponent(song.title)}', '${encodeURIComponent(song.artist)}')">
-                            <div class="trending-rank">${index + 1}</div>
-                            <div class="trending-info">
-                                <div class="trending-title" title="${song.title}">${song.title}</div>
-                                <div class="trending-artist" title="${song.artist}">${song.artist}</div>
-                            </div>
-                            <div class="trending-count">${song.count} plays</div>
+                    // No data yet - show helpful message
+                    grid.innerHTML = `
+                        <div class="trending-empty" style="grid-column: 1 / -1;">
+                            <i class="fas fa-chart-line"></i>
+                            <p style="font-size: 1.125rem; margin-bottom: 0.5rem;">No trending songs yet</p>
+                            <p style="font-size: 0.875rem; opacity: 0.7;">Be the first to search for a song!</p>
                         </div>
-                    `).join('');
+                    `;
                 }
             } catch (error) {
                 console.error('Error loading trending songs:', error);

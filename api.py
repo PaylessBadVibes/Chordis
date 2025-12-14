@@ -4188,27 +4188,84 @@ def get_popular_searches():
 
 @app.route("/api/analytics/popular-songs", methods=["GET"])
 def get_popular_songs():
-    """Get most recognized/analyzed songs"""
+    """Get most recognized/analyzed songs from all sources"""
     try:
         from datetime import timedelta
-        from sqlalchemy import func
+        from sqlalchemy import func, union_all
         
         limit = request.args.get('limit', 10, type=int)
         days = request.args.get('days', 30, type=int)
         
         cutoff_date = datetime.utcnow() - timedelta(days=days)
         
-        results = db.session.query(
-            SongRecognitionLog.song_title,
-            SongRecognitionLog.artist,
-            func.count(SongRecognitionLog.id).label('count')
-        ).filter(SongRecognitionLog.timestamp >= cutoff_date)\
-         .group_by(SongRecognitionLog.song_title, SongRecognitionLog.artist)\
-         .order_by(func.count(SongRecognitionLog.id).desc())\
-         .limit(limit)\
-         .all()
+        # Combine data from multiple sources
+        song_counts = {}
         
-        songs = [{'title': r[0], 'artist': r[1], 'count': r[2]} for r in results]
+        # 1. From SongRecognitionLog (music recognition)
+        try:
+            recognition_results = db.session.query(
+                SongRecognitionLog.song_title,
+                SongRecognitionLog.artist,
+                func.count(SongRecognitionLog.id).label('count')
+            ).filter(
+                SongRecognitionLog.timestamp >= cutoff_date,
+                SongRecognitionLog.song_title.isnot(None),
+                SongRecognitionLog.song_title != ''
+            ).group_by(SongRecognitionLog.song_title, SongRecognitionLog.artist).all()
+            
+            for r in recognition_results:
+                key = (r[0], r[1] or 'Unknown Artist')
+                song_counts[key] = song_counts.get(key, 0) + r[2]
+        except Exception as e:
+            print(f"[TRENDING] Recognition log error: {e}")
+        
+        # 2. From AnalysisActivityLog (chord analysis)
+        try:
+            analysis_results = db.session.query(
+                AnalysisActivityLog.song_title,
+                AnalysisActivityLog.artist,
+                func.count(AnalysisActivityLog.id).label('count')
+            ).filter(
+                AnalysisActivityLog.timestamp >= cutoff_date,
+                AnalysisActivityLog.song_title.isnot(None),
+                AnalysisActivityLog.song_title != ''
+            ).group_by(AnalysisActivityLog.song_title, AnalysisActivityLog.artist).all()
+            
+            for r in analysis_results:
+                key = (r[0], r[1] or 'Unknown Artist')
+                song_counts[key] = song_counts.get(key, 0) + r[2]
+        except Exception as e:
+            print(f"[TRENDING] Analysis log error: {e}")
+        
+        # 3. From SearchLog (searches)
+        try:
+            search_results = db.session.query(
+                SearchLog.search_query,
+                func.count(SearchLog.id).label('count')
+            ).filter(
+                SearchLog.timestamp >= cutoff_date,
+                SearchLog.search_query.isnot(None),
+                SearchLog.search_query != ''
+            ).group_by(SearchLog.search_query).all()
+            
+            for r in search_results:
+                # Parse "Song - Artist" format
+                query = r[0]
+                if ' - ' in query:
+                    parts = query.split(' - ', 1)
+                    title, artist = parts[0].strip(), parts[1].strip()
+                else:
+                    title, artist = query.strip(), 'Unknown Artist'
+                key = (title, artist)
+                song_counts[key] = song_counts.get(key, 0) + r[1]
+        except Exception as e:
+            print(f"[TRENDING] Search log error: {e}")
+        
+        # Sort by count and return top songs
+        sorted_songs = sorted(song_counts.items(), key=lambda x: x[1], reverse=True)[:limit]
+        songs = [{'title': k[0], 'artist': k[1], 'count': v} for k, v in sorted_songs]
+        
+        print(f"[TRENDING] Returning {len(songs)} trending songs")
         
         return jsonify({
             'success': True,
