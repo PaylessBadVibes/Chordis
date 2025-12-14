@@ -44,19 +44,36 @@
         
         .password-toggle {
             position: absolute;
-            right: var(--space-4);
+            right: 12px;
             top: 50%;
             transform: translateY(-50%);
             background: none;
             border: none;
             color: var(--text-muted);
             cursor: pointer;
-            padding: var(--space-2);
+            padding: 8px;
             transition: all var(--transition-base);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .password-toggle:hover {
             color: var(--text-primary);
+        }
+        
+        .password-toggle i {
+            position: static !important;
+            transform: none !important;
+            pointer-events: auto !important;
+            left: auto !important;
+            font-size: 1rem;
+        }
+        
+        /* Ensure password inputs have space for the toggle */
+        .input-group input.has-toggle {
+            padding-right: 48px !important;
         }
         
         .remember-forgot {
@@ -462,7 +479,7 @@
                                 <label for="password">Password</label>
                                 <div class="input-group">
                                     <i class="fas fa-lock"></i>
-                                    <input type="password" id="password" placeholder="Enter your password" required>
+                                    <input type="password" id="password" class="has-toggle" placeholder="Enter your password" required>
                                     <button type="button" class="password-toggle" onclick="togglePassword('password')">
                                         <i class="fas fa-eye"></i>
                                     </button>
@@ -510,7 +527,7 @@
                                 <label for="signupPassword">Password</label>
                                 <div class="input-group">
                                     <i class="fas fa-lock"></i>
-                                    <input type="password" id="signupPassword" placeholder="Create a password (min. 6 characters)" required>
+                                    <input type="password" id="signupPassword" class="has-toggle" placeholder="Create a password (min. 6 characters)" required>
                                     <button type="button" class="password-toggle" onclick="togglePassword('signupPassword')">
                                         <i class="fas fa-eye"></i>
                                     </button>
@@ -521,7 +538,7 @@
                                 <label for="confirmPassword">Confirm Password</label>
                                 <div class="input-group">
                                     <i class="fas fa-lock"></i>
-                                    <input type="password" id="confirmPassword" placeholder="Confirm your password" required>
+                                    <input type="password" id="confirmPassword" class="has-toggle" placeholder="Confirm your password" required>
                                     <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword')">
                                         <i class="fas fa-eye"></i>
                                     </button>
