@@ -2114,24 +2114,50 @@ def login():
     """Login user"""
     data = request.get_json()
     
-    username = data.get('username')
+    username_or_email = data.get('username')
     password = data.get('password')
     is_encrypted = data.get('encrypted', False)
+    original_password = password  # Keep original for fallback
     
     # Decrypt if data was encrypted
     if is_encrypted and request.headers.get('X-Encrypted') == 'true':
         try:
             password = decrypt_client_data(password)
-            print("[SECURITY] Decrypted login password successfully")
+            print(f"[SECURITY] Decrypted login password successfully")
         except Exception as e:
-            print(f"[WARN] Decryption failed, using as-is: {e}")
+            print(f"[WARN] Decryption failed: {e}, using original password")
+            password = original_password  # Use original if decryption fails
     
-    if not username or not password:
+    if not username_or_email or not password:
         return jsonify({"error": "Missing username or password"}), 400
     
-    user = User.query.filter_by(username=username).first()
+    # Try to find user by username first, then by email
+    user = User.query.filter_by(username=username_or_email).first()
+    if not user:
+        # Try email - check all users and compare decrypted email
+        all_users = User.query.all()
+        for u in all_users:
+            try:
+                if u.get_email() == username_or_email:
+                    user = u
+                    break
+            except:
+                pass
     
-    if not user or not user.check_password(password):
+    if not user:
+        print(f"[AUTH] User not found: {username_or_email}")
+        return jsonify({"error": "Invalid username or password"}), 401
+    
+    # Try password check - first with potentially decrypted password
+    password_ok = user.check_password(password)
+    
+    # If that fails and we had encryption, try with original (in case decryption was wrong)
+    if not password_ok and is_encrypted and password != original_password:
+        print("[AUTH] Trying with original encrypted password as fallback...")
+        password_ok = user.check_password(original_password)
+    
+    if not password_ok:
+        print(f"[AUTH] Password check failed for user: {user.username}")
         return jsonify({"error": "Invalid username or password"}), 401
     
     login_user(user, remember=data.get('remember', False))
@@ -3529,6 +3555,23 @@ def delete_user(user_id):
     except Exception as e:
         db.session.rollback()
         print(f"[ADMIN ERROR] Failed to delete user: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route("/api/check-admin", methods=["GET"])
+def check_admin():
+    """Check if admin exists and list all users (for debugging)"""
+    try:
+        users = User.query.all()
+        admin = User.query.filter_by(is_admin=True).first()
+        return jsonify({
+            'success': True,
+            'admin_exists': admin is not None,
+            'admin_username': admin.username if admin else None,
+            'total_users': len(users),
+            'users': [{'id': u.id, 'username': u.username, 'is_admin': u.is_admin} for u in users]
+        })
+    except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
