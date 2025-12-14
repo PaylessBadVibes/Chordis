@@ -3526,6 +3526,58 @@ def delete_user(user_id):
         print(f"[ADMIN ERROR] Failed to delete user: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+
+@app.route("/api/setup-admin", methods=["POST"])
+def setup_admin():
+    """
+    One-time admin setup - only works if no admin exists yet
+    POST /api/setup-admin with JSON: {"username": "admin", "email": "admin@example.com", "password": "yourpassword"}
+    """
+    try:
+        # Check if any admin already exists
+        existing_admin = User.query.filter_by(is_admin=True).first()
+        if existing_admin:
+            return jsonify({
+                'success': False, 
+                'error': 'Admin already exists. Use the admin panel to manage users.'
+            }), 400
+        
+        data = request.get_json()
+        username = data.get('username', 'admin')
+        email = data.get('email', 'admin@chordis.com')
+        password = data.get('password')
+        
+        if not password or len(password) < 6:
+            return jsonify({'success': False, 'error': 'Password must be at least 6 characters'}), 400
+        
+        # Check if username/email already exists
+        if User.query.filter_by(username=username).first():
+            return jsonify({'success': False, 'error': 'Username already exists'}), 400
+        
+        # Create admin user
+        admin = User(username=username, email=email, email_verified=True, is_admin=True)
+        admin.set_password(password)
+        
+        db.session.add(admin)
+        db.session.commit()
+        
+        print(f"[ADMIN SETUP] Admin user '{username}' created successfully!")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Admin user "{username}" created successfully!',
+            'credentials': {
+                'username': username,
+                'email': email
+            }
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"[ADMIN SETUP ERROR] {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route("/api/admin/stats", methods=["GET"])
 @admin_required
 def get_admin_stats():
