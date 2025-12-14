@@ -1069,10 +1069,10 @@
                                 Chord Progression
                             </h3>
                             
-                            <!-- Transpose Control -->
+                            <!-- Transpose Control - For Selected Chord Only -->
                             <div class="transpose-control">
                                 <span class="transpose-label">
-                                    <i class="fas fa-arrows-alt-v"></i> Transpose:
+                                    <i class="fas fa-arrows-alt-v"></i> Transpose Selected:
                                 </span>
                                 <div class="transpose-buttons">
                                     <button class="transpose-btn" onclick="transposeChords(-1)" title="Down 1 semitone">
@@ -1350,8 +1350,15 @@
             return newRoot + quality;
         }
         
-        // Transpose all chords
+        // Transpose ONLY the selected chord (not all chords)
         function transposeChords(semitones) {
+            // Check if a chord is selected
+            if (currentChordIndex < 0 || currentChordIndex >= chordData.length) {
+                // No chord selected - show message
+                alert('Please click on a chord first to select it, then use transpose.');
+                return;
+            }
+            
             transposeValue += semitones;
             
             // Limit to +/- 11 semitones
@@ -1361,22 +1368,37 @@
             // Update display
             updateTransposeDisplay();
             
-            // Transpose from original chords
-            if (originalChordData.length > 0) {
-                chordData = originalChordData.map(chord => transposeSingleChord(chord, transposeValue));
-                displayTransposedChords(chordData);
+            // Transpose ONLY the selected chord
+            const originalChord = originalChordData[currentChordIndex];
+            const transposedChord = transposeSingleChord(originalChord, transposeValue);
+            chordData[currentChordIndex] = transposedChord;
+            
+            // Update display
+            displayTransposedChords(chordData);
+            
+            // Update the current chord display and diagram
+            document.getElementById('currentChord').textContent = transposedChord;
+            if (typeof loadChordDiagram === 'function') {
+                loadChordDiagram(transposedChord);
             }
         }
         
-        // Reset transpose
+        // Reset transpose for selected chord only
         function resetTranspose() {
+            if (currentChordIndex >= 0 && currentChordIndex < originalChordData.length) {
+                // Reset only the selected chord
+                chordData[currentChordIndex] = originalChordData[currentChordIndex];
+                displayTransposedChords(chordData);
+                
+                // Update the current chord display
+                document.getElementById('currentChord').textContent = originalChordData[currentChordIndex];
+                if (typeof loadChordDiagram === 'function') {
+                    loadChordDiagram(originalChordData[currentChordIndex]);
+                }
+            }
+            
             transposeValue = 0;
             updateTransposeDisplay();
-            
-            if (originalChordData.length > 0) {
-                chordData = [...originalChordData];
-                displayTransposedChords(chordData);
-            }
         }
         
         // Update transpose value display
@@ -1405,7 +1427,9 @@
             chordsGrid.innerHTML = chords.map((chord, index) => {
                 const chordName = typeof chord === 'string' ? chord : (chord.name || chord.chord);
                 const isActive = index === currentChordIndex ? 'active' : '';
-                return `<div class="chord-item ${isActive}" data-index="${index}" onclick="selectChord(${index})">${chordName}</div>`;
+                // Show if chord was modified from original
+                const isModified = originalChordData[index] !== chordName ? ' (edited)' : '';
+                return `<div class="chord-item ${isActive}" data-index="${index}" onclick="selectChord(${index})" title="Original: ${originalChordData[index] || chordName}">${chordName}</div>`;
             }).join('');
         }
         
@@ -2357,6 +2381,10 @@
                 const chordName = typeof chordData[index] === 'string' ? chordData[index] : (chordData[index].name || chordData[index].chord);
                 document.getElementById('currentChord').textContent = chordName;
                 currentChordIndex = index;
+                
+                // Reset transpose value when selecting a new chord
+                transposeValue = 0;
+                updateTransposeDisplay();
                 
                 // Update chord diagram - try exact match first, then base chord
                 if (chordLibrary[chordName]) {
