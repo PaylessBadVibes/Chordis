@@ -3189,6 +3189,14 @@
                 // Always render integrated view when switching to it
                 if (currentAnalysis) {
                     renderIntegratedView();
+                    
+                    // Scroll to the Tab View content after a short delay to allow rendering
+                    setTimeout(() => {
+                        integratedContainer.scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'start' 
+                        });
+                    }, 100);
                 } else {
                     console.error('[VIEW SWITCH] Cannot render - no currentAnalysis data!');
                     integratedContainer.innerHTML = `
@@ -3202,6 +3210,14 @@
                 integratedContainer.style.display = 'none';
                 separateContainer.style.display = 'block';
                 console.log('[VIEW SWITCH] Separate view activated');
+                
+                // Scroll to the Separate View content
+                setTimeout(() => {
+                    separateContainer.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'start' 
+                    });
+                }, 100);
             }
         }
         
