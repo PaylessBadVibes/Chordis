@@ -1,17 +1,22 @@
 # ============================================
-# CHORDIS MAIN API REQUIREMENTS
+# CHORDIS + CHORDMINI REQUIREMENTS
+# Combined requirements for Railway deployment
 # ============================================
+
+# Core Flask
 flask>=2.3.0
 flask-cors>=4.0.0
 flask-sqlalchemy>=3.0.0
 flask-login>=0.6.0
 flask-mail>=0.10.0
+flask-limiter>=3.5.0
 gunicorn>=21.2.0
 werkzeug>=3.0.0
 python-dotenv>=1.0.0
 itsdangerous>=2.2.0
 cryptography>=41.0.0
 requests>=2.31.0
+limits>=5.2.0
 
 # ============================================
 # AUDIO PROCESSING
@@ -23,15 +28,53 @@ soundfile>=0.12.0
 audioread>=3.0.0
 pydub>=0.25.0
 ffmpeg-python>=0.2.0
+resampy>=0.4.0
 
 # ============================================
 # ML FRAMEWORKS
 # ============================================
 torch>=2.0.0
+torchaudio
+tensorflow>=2.15.0
 openai-whisper>=20230314
+
+# ============================================
+# CHORDMINI ML DEPENDENCIES
+# ============================================
+spleeter>=2.3.0
+norbert>=0.2.0
+pretty_midi>=0.2.0
+mir_eval>=0.8.0
+mido>=1.3.0
+
+# ============================================
+# CHORD PROCESSING
+# ============================================
+jams>=0.3.0
+pumpp>=0.6.0
+
+# ============================================
+# DATA SCIENCE
+# ============================================
+pandas>=1.5.0
+scikit-learn>=1.0.0
+matplotlib>=3.5.0
+seaborn>=0.12.0
+joblib>=1.0.0
+h5py>=3.0.0
 
 # ============================================
 # MEDIA & LYRICS
 # ============================================
 yt-dlp>=2023.10.0
 lyricsgenius>=3.0.0
+
+# ============================================
+# UTILITIES
+# ============================================
+httpx>=0.25.0
+Pillow>=9.0.0
+PyYAML>=6.0.0
+tqdm>=4.60.0
+typing_extensions>=4.0.0
+cachetools>=5.0.0
