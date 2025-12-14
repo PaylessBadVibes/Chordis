@@ -3641,11 +3641,6 @@ def tutorials_page():
     """Serve the tutorials page"""
     return send_from_directory('static', 'tutorials.html')
 
-@app.route("/flowchart", methods=["GET"])
-def flowchart_page():
-    """Serve the algorithm flowchart page"""
-    return send_from_directory('static', 'flowchart.html')
-
 
 @app.route("/api/tutorials", methods=["GET"])
 def get_tutorials():
