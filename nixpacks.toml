@@ -1,3 +1,4 @@
+# Chordis Music AI - Railway Deployment Config
 [phases.setup]
 nixPkgs = ["python311", "python311Packages.pip", "ffmpeg"]
 
