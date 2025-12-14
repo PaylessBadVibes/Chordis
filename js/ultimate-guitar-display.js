@@ -124,13 +124,32 @@ class IntegratedSheetDisplay {
         const strumPattern = this.detectStrummingPattern(tempo);
         const mergedLines = this.mergeChordsWithLyrics(chords, lyrics);
         
+        // Inline styles to ensure white background regardless of page theme
+        const containerStyle = `
+            background: #ffffff !important;
+            background-color: #ffffff !important;
+            color: #1a1a1a !important;
+            font-family: 'Roboto Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
+            max-width: 900px;
+            margin: 0 auto;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        `.replace(/\n/g, ' ').trim();
+        
+        const contentStyle = `
+            padding: 24px;
+            background: #ffffff !important;
+            background-color: #ffffff !important;
+        `.replace(/\n/g, ' ').trim();
+        
         return `
-            <div class="ug-container">
+            <div class="ug-container" style="${containerStyle}">
                 ${this.generateHeader(title, artist, key, tempo, duration, uniqueChords.length, tuning, capo)}
                 ${this.generateInstrumentTabs()}
                 ${this.generateChordDiagrams(uniqueChords)}
                 ${this.generateStrummingPattern(strumPattern, tempo)}
-                <div class="ug-content">
+                <div class="ug-content" style="${contentStyle}">
                     ${this.generateLyricsWithChords(mergedLines)}
                 </div>
             </div>
@@ -141,23 +160,29 @@ class IntegratedSheetDisplay {
         // Store song data for PDF export
         this.currentSongData = { title, artist, key, tempo, duration, tuning, capo };
         
+        const headerStyle = 'padding: 24px; border-bottom: 1px solid #e5e5e5; background: #fafafa !important; background-color: #fafafa !important;';
+        const titleStyle = 'font-size: 1.75rem; font-weight: 700; color: #1a1a1a !important; margin: 0 0 4px 0;';
+        const artistStyle = 'font-size: 1rem; color: #666666 !important; margin: 0;';
+        const metaStyle = 'color: #666666 !important;';
+        const strongStyle = 'color: #1a1a1a !important;';
+        
         return `
-            <div class="ug-header">
-                <div class="ug-header-top">
+            <div class="ug-header" style="${headerStyle}">
+                <div class="ug-header-top" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 16px;">
                     <div>
-                        <h1 class="ug-title">${title || 'Unknown Song'} Chords</h1>
-                        <p class="ug-artist">by ${artist || 'Unknown Artist'}</p>
+                        <h1 class="ug-title" style="${titleStyle}">${title || 'Unknown Song'} Chords</h1>
+                        <p class="ug-artist" style="${artistStyle}">by ${artist || 'Unknown Artist'}</p>
                     </div>
-                    <button class="ug-download-btn" onclick="window.sheetDisplay?.downloadPDF()">
+                    <button class="ug-download-btn" onclick="window.sheetDisplay?.downloadPDF()" style="padding: 10px 16px; background: #238636; border: none; border-radius: 6px; color: #fff; font-weight: 600; cursor: pointer;">
                         📥 Download PDF
                     </button>
                 </div>
-                <div class="ug-meta">
-                    <span><strong>Tuning:</strong> ${tuning || 'E A D G B E'}</span>
-                    <span><strong>Key:</strong> ${key || 'C Major'}</span>
-                    <span><strong>Capo:</strong> ${capo || 'no capo'}</span>
+                <div class="ug-meta" style="${metaStyle} display: flex; flex-wrap: wrap; gap: 16px; font-size: 0.875rem; margin-bottom: 12px;">
+                    <span><strong style="${strongStyle}">Tuning:</strong> ${tuning || 'E A D G B E'}</span>
+                    <span><strong style="${strongStyle}">Key:</strong> ${key || 'C Major'}</span>
+                    <span><strong style="${strongStyle}">Capo:</strong> ${capo || 'no capo'}</span>
                 </div>
-                <div class="ug-stats">
+                <div class="ug-stats" style="${metaStyle} display: flex; gap: 20px; font-size: 0.875rem;">
                     <span>🎵 ${chordCount} chords</span>
                     <span>🥁 ${tempo || 120} BPM</span>
                     <span>⏱️ ${this.formatDuration(duration)}</span>
@@ -377,20 +402,24 @@ class IntegratedSheetDisplay {
     }
 
     generateLine(line, index) {
+        const sectionStyle = 'font-weight: 700; color: #666666 !important; font-size: 0.9rem; margin: 28px 0 12px 0;';
+        const chordsStyle = 'color: #b74f41 !important; font-weight: 700; font-size: 14px; white-space: pre; margin-bottom: 0; line-height: 1.4;';
+        const lyricsStyle = 'color: #1a1a1a !important; white-space: pre-wrap; font-size: 14px; line-height: 1.6;';
+        
         if (line.type === 'section') {
-            return `<div class="ug-section">[${line.text}]</div>`;
+            return `<div class="ug-section" style="${sectionStyle}">[${line.text}]</div>`;
         }
 
         const { chordsRow, lyricsRow } = this.alignChordsWithLyrics(line);
         
         if (!chordsRow && !lyricsRow.trim()) {
-            return '<div class="ug-line-empty"></div>';
+            return '<div class="ug-line-empty" style="height: 20px;"></div>';
         }
         
         return `
-            <div class="ug-line">
-                ${chordsRow ? `<div class="ug-chords">${chordsRow}</div>` : ''}
-                <div class="ug-lyrics">${lyricsRow || ''}</div>
+            <div class="ug-line" style="margin-bottom: 4px; line-height: 1.6;">
+                ${chordsRow ? `<div class="ug-chords" style="${chordsStyle}">${chordsRow}</div>` : ''}
+                <div class="ug-lyrics" style="${lyricsStyle}">${lyricsRow || ''}</div>
             </div>
         `;
     }
