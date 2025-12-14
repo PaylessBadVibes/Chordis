@@ -3655,6 +3655,43 @@ def seed_tutorials():
     try:
         # Default tutorials data
         default_tutorials = [
+            # === ABSOLUTE BEGINNER - START HERE ===
+            {
+                'title': '🌟 START HERE: How to Hold a Guitar (Day 1)',
+                'description': 'Your very first guitar lesson! Learn proper posture, how to hold the guitar, and basic hand positioning.',
+                'content_type': 'video',
+                'skill_level': 'beginner',
+                'content': 'Day 1 of your guitar journey. Perfect for people who just bought their first guitar.',
+                'video_url': 'https://www.youtube.com/watch?v=RXLzvoP2Wj4',
+                'thumbnail': 'https://img.youtube.com/vi/RXLzvoP2Wj4/maxresdefault.jpg',
+                'duration': 12,
+                'order': 0,
+                'is_published': True
+            },
+            {
+                'title': '🌟 Complete Beginner Guitar Course (1 Hour)',
+                'description': 'Everything you need to learn guitar from scratch in one comprehensive video. No experience needed!',
+                'content_type': 'video',
+                'skill_level': 'beginner',
+                'content': 'Full beginner course covering chords, strumming, and your first songs.',
+                'video_url': 'https://www.youtube.com/watch?v=BBz-Jyr23M4',
+                'thumbnail': 'https://img.youtube.com/vi/BBz-Jyr23M4/maxresdefault.jpg',
+                'duration': 60,
+                'order': 1,
+                'is_published': True
+            },
+            {
+                'title': '🌟 Learn Piano in 10 Minutes - First Lesson',
+                'description': 'Start playing piano TODAY! Learn the basics of piano in just 10 minutes.',
+                'content_type': 'video',
+                'skill_level': 'beginner',
+                'content': 'Quick start guide to piano. Learn keys, hand position, and play your first notes.',
+                'video_url': 'https://www.youtube.com/watch?v=QBH6IpRkVDs',
+                'thumbnail': 'https://img.youtube.com/vi/QBH6IpRkVDs/maxresdefault.jpg',
+                'duration': 10,
+                'order': 2,
+                'is_published': True
+            },
             # === TOOLS ===
             {
                 'title': 'Chromatone Helper - Chord Progression Tool',
@@ -3665,7 +3702,7 @@ def seed_tutorials():
                 'video_url': 'https://iostream.github.io/chromatone-helper/multi-track-sequencer/',
                 'thumbnail': 'https://opengraph.githubassets.com/1/iostream/chromatone-helper',
                 'duration': None,
-                'order': 1,
+                'order': 3,
                 'is_published': True
             },
             # === BEGINNER GUITAR ===
@@ -3817,6 +3854,105 @@ def seed_tutorials():
                 'thumbnail': 'https://img.youtube.com/vi/5MzpL5aVzSg/maxresdefault.jpg',
                 'duration': 21,
                 'order': 13,
+                'is_published': True
+            },
+            # === EASY BEGINNER SONGS ===
+            {
+                'title': '🎵 10 Easy Songs with 2 Chords for Beginners',
+                'description': 'Play real songs with just 2 chords! Perfect first songs for absolute beginners.',
+                'content_type': 'video',
+                'skill_level': 'beginner',
+                'content': 'Start playing songs immediately with just 2 simple chords.',
+                'video_url': 'https://www.youtube.com/watch?v=Ry4CFtVL6xc',
+                'thumbnail': 'https://img.youtube.com/vi/Ry4CFtVL6xc/maxresdefault.jpg',
+                'duration': 15,
+                'order': 14,
+                'is_published': True
+            },
+            {
+                'title': '🎵 4 Chords, 36 Songs on Guitar',
+                'description': 'Learn just 4 chords and play 36 popular songs! The famous G-D-Em-C progression.',
+                'content_type': 'video',
+                'skill_level': 'beginner',
+                'content': 'Master the most popular chord progression in music history.',
+                'video_url': 'https://www.youtube.com/watch?v=GqPGMnvPqHs',
+                'thumbnail': 'https://img.youtube.com/vi/GqPGMnvPqHs/maxresdefault.jpg',
+                'duration': 18,
+                'order': 15,
+                'is_published': True
+            },
+            {
+                'title': '🎵 Easy Piano Songs for Beginners',
+                'description': 'Simple piano songs you can learn in minutes. Perfect for your first week of piano.',
+                'content_type': 'video',
+                'skill_level': 'beginner',
+                'content': 'Beautiful easy songs that sound impressive but are simple to play.',
+                'video_url': 'https://www.youtube.com/watch?v=EPFK3dFgCys',
+                'thumbnail': 'https://img.youtube.com/vi/EPFK3dFgCys/maxresdefault.jpg',
+                'duration': 20,
+                'order': 16,
+                'is_published': True
+            },
+            # === BEGINNER TIPS & PRACTICE ===
+            {
+                'title': '📚 How to Practice Guitar Effectively',
+                'description': 'Learn how to practice efficiently and improve faster. Essential tips for beginners.',
+                'content_type': 'video',
+                'skill_level': 'beginner',
+                'content': 'Practice smarter, not harder. Get better results in less time.',
+                'video_url': 'https://www.youtube.com/watch?v=9D0dAKLHKnE',
+                'thumbnail': 'https://img.youtube.com/vi/9D0dAKLHKnE/maxresdefault.jpg',
+                'duration': 12,
+                'order': 17,
+                'is_published': True
+            },
+            {
+                'title': '📚 Common Beginner Guitar Mistakes to Avoid',
+                'description': 'Avoid these mistakes that hold back most beginners. Learn the right way from the start.',
+                'content_type': 'video',
+                'skill_level': 'beginner',
+                'content': 'Fix bad habits before they become permanent.',
+                'video_url': 'https://www.youtube.com/watch?v=xW1D4B6yH1U',
+                'thumbnail': 'https://img.youtube.com/vi/xW1D4B6yH1U/maxresdefault.jpg',
+                'duration': 14,
+                'order': 18,
+                'is_published': True
+            },
+            {
+                'title': '📚 How to Read Chord Diagrams',
+                'description': 'Learn to read guitar chord charts and diagrams. Essential skill for any guitarist.',
+                'content_type': 'video',
+                'skill_level': 'beginner',
+                'content': 'Understand chord diagrams so you can learn any chord from a chart.',
+                'video_url': 'https://www.youtube.com/watch?v=HiLKnfbGKVk',
+                'thumbnail': 'https://img.youtube.com/vi/HiLKnfbGKVk/maxresdefault.jpg',
+                'duration': 8,
+                'order': 19,
+                'is_published': True
+            },
+            # === BEGINNER EXERCISES ===
+            {
+                'title': '💪 Guitar Finger Exercises for Beginners',
+                'description': 'Build finger strength and dexterity with these simple daily exercises.',
+                'content_type': 'video',
+                'skill_level': 'beginner',
+                'content': 'Essential exercises to develop the finger strength you need for chords.',
+                'video_url': 'https://www.youtube.com/watch?v=TSrfB7JIzxY',
+                'thumbnail': 'https://img.youtube.com/vi/TSrfB7JIzxY/maxresdefault.jpg',
+                'duration': 15,
+                'order': 20,
+                'is_published': True
+            },
+            {
+                'title': '💪 Piano Finger Exercises for Beginners',
+                'description': 'Develop piano technique with Hanon-style exercises simplified for beginners.',
+                'content_type': 'video',
+                'skill_level': 'beginner',
+                'content': 'Build speed, strength, and independence in your fingers.',
+                'video_url': 'https://www.youtube.com/watch?v=tQh3-WBzaKY',
+                'thumbnail': 'https://img.youtube.com/vi/tQh3-WBzaKY/maxresdefault.jpg',
+                'duration': 18,
+                'order': 21,
                 'is_published': True
             }
         ]
