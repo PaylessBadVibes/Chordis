@@ -1,9 +1,0 @@
-# Nixpacks configuration for Railway deployment
-
-[phases.setup]
-nixPkgs = ["ffmpeg", "python310", "gcc", "pkg-config"]
-
-[variables]
-CHORDMINI_API_URL = "http://127.0.0.1:5001"
-CHORDMINI_ENABLED = "true"
-FLASK_ENV = "production"
