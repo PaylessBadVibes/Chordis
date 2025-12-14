@@ -490,6 +490,11 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
+# Create database tables (runs on import, needed for gunicorn)
+with app.app_context():
+    db.create_all()
+    print("[DB] Database tables created/verified")
+
 
 @login_manager.user_loader
 def load_user(user_id):
