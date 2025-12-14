@@ -1,0 +1,7 @@
+# Force pip to work in Nix environment
+[phases.install]
+cmds = ["pip install --no-cache-dir --break-system-packages -r requirements.txt"]
+
+[start]
+cmd = "gunicorn api:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120"
+
