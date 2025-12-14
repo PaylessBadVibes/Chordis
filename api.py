@@ -68,12 +68,19 @@ CACHE_DURATION_HOURS = 2  # Cache audio files for 2 hours
 # ============================================
 # ChordMiniApp provides ML-based chord detection with 301 chord types
 # GitHub: https://github.com/ptnghia-j/ChordMiniApp
-# Use 127.0.0.1 for same-container communication (Railway)
-CHORDMINI_API_URL = os.getenv('CHORDMINI_API_URL', 'http://127.0.0.1:5001')
-CHORDMINI_TIMEOUT = int(os.getenv('CHORDMINI_TIMEOUT', '120'))  # seconds
-# ChordMini - disabled on Railway due to complex dependencies
+# Official live service: https://www.chordmini.me
+# Using the official ChordMini backend API
 IS_RAILWAY = bool(os.getenv('RAILWAY_ENVIRONMENT') or os.getenv('RAILWAY_SERVICE_NAME'))
-CHORDMINI_ENABLED = os.getenv('CHORDMINI_ENABLED', 'false' if IS_RAILWAY else 'true').lower() == 'true'
+
+# Try official ChordMini API first, fallback to local
+# The official backend is on Google Cloud Run
+CHORDMINI_API_URL = os.getenv('CHORDMINI_API_URL', 
+    'https://chordmini-backend-1021973218498.us-west1.run.app' if IS_RAILWAY 
+    else 'http://127.0.0.1:5001'
+)
+CHORDMINI_TIMEOUT = int(os.getenv('CHORDMINI_TIMEOUT', '180'))  # seconds (longer for external API)
+# Enable ChordMini - will fallback to rule-based if API unavailable
+CHORDMINI_ENABLED = os.getenv('CHORDMINI_ENABLED', 'true').lower() == 'true'
 
 # Circuit breaker state for ChordMiniApp
 chordmini_circuit_breaker = {
@@ -654,14 +661,20 @@ else:
 # Initialize ChordMiniApp status (ML-based chord detection)
 print("\nChordMiniApp Status:")
 if CHORDMINI_ENABLED:
+    is_external_api = 'run.app' in CHORDMINI_API_URL or 'chordmini.me' in CHORDMINI_API_URL
     if is_chordmini_available():
         print(f"[CHORDMINI] ✓ Service available at {CHORDMINI_API_URL}")
-        print("[CHORDMINI] Using ML-based chord detection (301 chord types)")
+        if is_external_api:
+            print("[CHORDMINI] Using official ChordMini API (ML-based, 301 chord types)")
+            print("[CHORDMINI] API: https://github.com/ptnghia-j/ChordMiniApp")
+        else:
+            print("[CHORDMINI] Using local ML-based chord detection (301 chord types)")
     else:
         print(f"[CHORDMINI] ✗ Service not available at {CHORDMINI_API_URL}")
         print("[CHORDMINI] Will use rule-based detection as fallback (~48 chord types)")
-        print("[CHORDMINI] To enable: run start_servers.bat or manually start ChordMiniApp:")
-        print("[CHORDMINI]   cd chordmini/python_backend && python app.py")
+        if not is_external_api:
+            print("[CHORDMINI] To enable locally: run start_servers.bat or:")
+            print("[CHORDMINI]   cd chordmini/python_backend && python app.py")
 else:
     print("[CHORDMINI] ✗ Disabled (CHORDMINI_ENABLED=false in .env)")
     print("[CHORDMINI] Using rule-based chord detection")
@@ -4483,8 +4496,11 @@ if __name__ == "__main__":
     chordmini_process = None
     is_reloader = os.environ.get('WERKZEUG_RUN_MAIN') == 'true'
     is_production = os.environ.get('RAILWAY_ENVIRONMENT') or os.environ.get('FLASK_ENV') == 'production'
+    is_external_api = 'run.app' in CHORDMINI_API_URL or 'chordmini.me' in CHORDMINI_API_URL
     
-    if CHORDMINI_ENABLED and not is_reloader and not is_production:
+    if is_external_api:
+        print("[CHORDMINI-AUTO] Skipped - Using official ChordMini external API")
+    elif CHORDMINI_ENABLED and not is_reloader and not is_production:
         chordmini_process = start_chordmini_service()
     elif is_production:
         print("[CHORDMINI-AUTO] Skipped - Running in production mode")
