@@ -835,6 +835,133 @@
                 margin-bottom: var(--space-2);
             }
         }
+        
+        /* Live Microphone Detection Styles */
+        .live-detection-panel {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(59, 130, 246, 0.15) 100%);
+            border: 2px solid rgba(16, 185, 129, 0.3);
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            margin-bottom: var(--space-6);
+        }
+        
+        .live-detection-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-4);
+            flex-wrap: wrap;
+            gap: var(--space-3);
+        }
+        
+        .live-detection-title {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .live-detection-title i {
+            color: #10b981;
+        }
+        
+        .mic-btn {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-3) var(--space-5);
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none;
+            border-radius: var(--radius-lg);
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all var(--transition-base);
+        }
+        
+        .mic-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+        }
+        
+        .mic-btn.listening {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            animation: pulse-mic 1.5s infinite;
+        }
+        
+        @keyframes pulse-mic {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            50% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
+        }
+        
+        .live-chord-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-6);
+            padding: var(--space-6);
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: var(--radius-lg);
+            min-height: 120px;
+        }
+        
+        .live-chord-name {
+            font-size: 4rem;
+            font-weight: 900;
+            color: #10b981;
+            text-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+            min-width: 150px;
+            text-align: center;
+        }
+        
+        .live-chord-name.no-chord {
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            font-weight: 400;
+        }
+        
+        .detected-notes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-2);
+            justify-content: center;
+        }
+        
+        .note-badge {
+            padding: var(--space-2) var(--space-3);
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--primary-400);
+        }
+        
+        .detection-status {
+            text-align: center;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-top: var(--space-3);
+        }
+        
+        .detection-status.active {
+            color: #10b981;
+        }
+        
+        @media (max-width: 768px) {
+            .live-chord-display {
+                flex-direction: column;
+                gap: var(--space-4);
+            }
+            
+            .live-chord-name {
+                font-size: 3rem;
+                min-width: auto;
+            }
+        }
     </style>
 </head>
 <body>
@@ -887,6 +1014,31 @@
             <div class="chord-ai-layout">
                 <!-- Main Player Area -->
                 <div class="player-area">
+                    <!-- Live Microphone Detection Panel -->
+                    <div class="live-detection-panel">
+                        <div class="live-detection-header">
+                            <div class="live-detection-title">
+                                <i class="fas fa-microphone-alt"></i>
+                                Live Chord Detection
+                            </div>
+                            <button class="mic-btn" id="micBtn" onclick="toggleMicDetection()">
+                                <i class="fas fa-microphone"></i>
+                                <span id="micBtnText">Start Listening</span>
+                            </button>
+                        </div>
+                        <div class="live-chord-display">
+                            <div class="live-chord-name no-chord" id="liveChordName">
+                                <i class="fas fa-guitar"></i> Play to detect
+                            </div>
+                            <div class="detected-notes" id="detectedNotes">
+                                <!-- Notes will appear here when detected -->
+                            </div>
+                        </div>
+                        <div class="detection-status" id="detectionStatus">
+                            Click "Start Listening" and play your guitar or any instrument
+                        </div>
+                    </div>
+                    
                     <div class="current-chord-display">
                         <div class="current-chord" id="currentChord">--</div>
                         <div class="chord-info" id="chordInfo">No song loaded</div>
@@ -1131,6 +1283,7 @@
     
     <script src="/js/ultimate-guitar-display.js?v=3.0"></script>
     <script src="/js/chord-pdf-export.js?v=3.0"></script>
+    <script src="/js/realtime-recognition.js?v=3.0"></script>
     <script>
         let isPlaying = false;
         let currentChordIndex = 0;
@@ -1140,6 +1293,10 @@
         let playInterval = null;
         let audioPlayer = null;
         let currentSongData = null;
+        
+        // Microphone detection variables
+        let chordRecognizer = null;
+        let isMicListening = false;
         
         // Chromatic scale for transposition
         const chromaticScale = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -1252,6 +1409,140 @@
             }).join('');
         }
         
+        // ============================================
+        // MICROPHONE CHORD DETECTION
+        // ============================================
+        
+        async function toggleMicDetection() {
+            if (!isMicListening) {
+                await startMicDetection();
+            } else {
+                stopMicDetection();
+            }
+        }
+        
+        async function startMicDetection() {
+            try {
+                // Initialize chord recognizer if not already
+                if (!chordRecognizer) {
+                    if (typeof RealtimeChordRecognition === 'undefined') {
+                        alert('Chord recognition module not loaded. Please refresh the page.');
+                        return;
+                    }
+                    chordRecognizer = new RealtimeChordRecognition();
+                }
+                
+                // Set up callbacks for chord detection
+                chordRecognizer.onChordDetected = (chord, notes) => {
+                    updateLiveChordDisplay(chord, notes);
+                };
+                
+                chordRecognizer.onError = (error) => {
+                    console.error('Chord detection error:', error);
+                    updateDetectionStatus('Error: ' + error, false);
+                };
+                
+                // Start listening
+                await chordRecognizer.startListening();
+                
+                isMicListening = true;
+                
+                // Update UI
+                const micBtn = document.getElementById('micBtn');
+                const micBtnText = document.getElementById('micBtnText');
+                micBtn.classList.add('listening');
+                micBtnText.textContent = 'Stop Listening';
+                
+                updateDetectionStatus('🎤 Listening... Play your instrument!', true);
+                
+                console.log('[CHORDAI] Started microphone chord detection');
+                
+            } catch (error) {
+                console.error('Failed to start microphone detection:', error);
+                
+                if (error.name === 'NotAllowedError') {
+                    alert('Microphone access denied. Please allow microphone access in your browser settings.');
+                } else if (error.name === 'NotFoundError') {
+                    alert('No microphone found. Please connect a microphone and try again.');
+                } else {
+                    alert('Failed to start microphone: ' + error.message);
+                }
+                
+                updateDetectionStatus('Failed to access microphone', false);
+            }
+        }
+        
+        function stopMicDetection() {
+            if (chordRecognizer) {
+                chordRecognizer.stopListening();
+            }
+            
+            isMicListening = false;
+            
+            // Update UI
+            const micBtn = document.getElementById('micBtn');
+            const micBtnText = document.getElementById('micBtnText');
+            micBtn.classList.remove('listening');
+            micBtnText.textContent = 'Start Listening';
+            
+            // Reset display
+            const liveChordName = document.getElementById('liveChordName');
+            liveChordName.innerHTML = '<i class="fas fa-guitar"></i> Play to detect';
+            liveChordName.classList.add('no-chord');
+            
+            document.getElementById('detectedNotes').innerHTML = '';
+            updateDetectionStatus('Click "Start Listening" and play your guitar or any instrument', false);
+            
+            console.log('[CHORDAI] Stopped microphone chord detection');
+        }
+        
+        function updateLiveChordDisplay(chord, notes) {
+            const liveChordName = document.getElementById('liveChordName');
+            const detectedNotes = document.getElementById('detectedNotes');
+            
+            if (chord && chord !== 'N' && chord !== 'Unknown') {
+                liveChordName.textContent = chord;
+                liveChordName.classList.remove('no-chord');
+                
+                // Also update the main chord display
+                document.getElementById('currentChord').textContent = chord;
+                
+                // Load chord diagram for detected chord
+                if (typeof loadChordDiagram === 'function') {
+                    loadChordDiagram(chord);
+                }
+            } else {
+                liveChordName.innerHTML = '<i class="fas fa-wave-square"></i> Detecting...';
+                liveChordName.classList.add('no-chord');
+            }
+            
+            // Display detected notes
+            if (notes && notes.length > 0) {
+                detectedNotes.innerHTML = notes.map(note => 
+                    `<span class="note-badge">${note}</span>`
+                ).join('');
+            } else {
+                detectedNotes.innerHTML = '';
+            }
+        }
+        
+        function updateDetectionStatus(message, isActive) {
+            const status = document.getElementById('detectionStatus');
+            status.textContent = message;
+            status.classList.toggle('active', isActive);
+        }
+        
+        // Clean up microphone when leaving page
+        window.addEventListener('beforeunload', () => {
+            if (chordRecognizer && isMicListening) {
+                chordRecognizer.stopListening();
+            }
+        });
+        
+        // ============================================
+        // END MICROPHONE CHORD DETECTION
+        // ============================================
+        
         // Reset all state - prevents stale data between songs
         function resetState() {
             console.log('[CHORDAI STATE] Resetting state');
@@ -1263,6 +1554,11 @@
             originalChordData = []; // Clear original chords for transpose
             transposeValue = 0; // Reset transpose
             currentSongData = null;
+            
+            // Stop microphone detection if active
+            if (isMicListening) {
+                stopMicDetection();
+            }
             
             // Stop any playing interval
             if (playInterval) {
