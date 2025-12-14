@@ -1501,17 +1501,71 @@
             });
         }
         
-        // Chord diagram and tuner functionality
+        // Chord diagram and tuner functionality - Extended library
         const chordLibrary = {
-            'C': { basic: [[0,3,2,0,1,0]], barre: [[8,10,10,9,8,8]], advanced: [[8,10,10,9,8,8]] },
-            'Am': { basic: [[0,0,2,2,1,0]] },
-            'F': { basic: [[1,3,3,2,1,1]] },
-            'G': { basic: [[3,2,0,0,0,3]] },
+            // Major chords
+            'C': { basic: [[0,3,2,0,1,0]], barre: [[3,3,5,5,5,3]], advanced: [[8,10,10,9,8,8]] },
+            'D': { basic: [[0,0,0,2,3,2]], barre: [[5,5,7,7,7,5]] },
+            'E': { basic: [[0,2,2,1,0,0]] },
+            'F': { basic: [[1,3,3,2,1,1]], barre: [[1,3,3,2,1,1]] },
+            'G': { basic: [[3,2,0,0,0,3]], barre: [[3,5,5,4,3,3]] },
+            'A': { basic: [[0,0,2,2,2,0]], barre: [[5,7,7,6,5,5]] },
+            'B': { basic: [[0,2,4,4,4,2]], barre: [[2,4,4,4,2,2]] },
+            
+            // Minor chords
+            'Am': { basic: [[0,0,2,2,1,0]], barre: [[5,7,7,5,5,5]] },
+            'Bm': { basic: [[0,2,4,4,3,2]], barre: [[2,4,4,3,2,2]] },
+            'Cm': { basic: [[0,3,5,5,4,3]], barre: [[3,5,5,4,3,3]] },
+            'Dm': { basic: [[0,0,0,2,3,1]], barre: [[5,7,7,6,5,5]] },
             'Em': { basic: [[0,2,2,0,0,0]] },
-            'Dm': { basic: [[0,0,0,2,3,1]] },
-            'D': { basic: [[0,0,0,2,3,2]] },
-            'A': { basic: [[0,0,2,2,2,0]] },
-            'E': { basic: [[0,2,2,1,0,0]] }
+            'Fm': { basic: [[1,3,3,1,1,1]] },
+            'Gm': { basic: [[3,5,5,3,3,3]] },
+            'F#m': { basic: [[2,4,4,2,2,2]] },
+            'G#m': { basic: [[4,6,6,4,4,4]] },
+            'C#m': { basic: [[4,4,6,6,5,4]] },
+            'D#m': { basic: [[0,6,8,8,7,6]] },
+            'A#m': { basic: [[1,3,3,1,1,1]] },
+            
+            // 7th chords
+            'C7': { basic: [[0,3,2,3,1,0]] },
+            'D7': { basic: [[0,0,0,2,1,2]] },
+            'E7': { basic: [[0,2,0,1,0,0]] },
+            'F7': { basic: [[1,3,1,2,1,1]] },
+            'G7': { basic: [[3,2,0,0,0,1]] },
+            'A7': { basic: [[0,0,2,0,2,0]] },
+            'B7': { basic: [[0,2,1,2,0,2]] },
+            'Am7': { basic: [[0,0,2,0,1,0]] },
+            'Dm7': { basic: [[0,0,0,2,1,1]] },
+            'Em7': { basic: [[0,2,0,0,0,0]] },
+            
+            // Sus chords
+            'Dsus4': { basic: [[0,0,0,2,3,3]] },
+            'Dsus2': { basic: [[0,0,0,2,3,0]] },
+            'Asus4': { basic: [[0,0,2,2,3,0]] },
+            'Asus2': { basic: [[0,0,2,2,0,0]] },
+            'Esus4': { basic: [[0,2,2,2,0,0]] },
+            'Gsus4': { basic: [[3,3,0,0,1,3]] },
+            
+            // Major 7th
+            'Cmaj7': { basic: [[0,3,2,0,0,0]] },
+            'Dmaj7': { basic: [[0,0,0,2,2,2]] },
+            'Fmaj7': { basic: [[1,3,2,2,1,0]] },
+            'Gmaj7': { basic: [[3,2,0,0,0,2]] },
+            'Amaj7': { basic: [[0,0,2,1,2,0]] },
+            
+            // Minor 7th
+            'Bm7': { basic: [[0,2,4,2,3,2]] },
+            'F#m7': { basic: [[2,4,2,2,2,2]] },
+            'C#m7': { basic: [[4,4,6,4,5,4]] },
+            
+            // Diminished & Augmented
+            'Cdim': { basic: [[0,3,4,2,4,2]] },
+            'Ddim': { basic: [[0,0,0,1,3,1]] },
+            'Bdim': { basic: [[0,2,3,1,3,1]] },
+            'Caug': { basic: [[0,3,2,1,1,0]] },
+            
+            // Special
+            'N': { basic: [[0,0,0,0,0,0]] }, // No chord / muted
         };
         
         let currentSelectedChord = 'C';
@@ -1571,8 +1625,22 @@
             // Clear all active frets
             document.querySelectorAll('.fret').forEach(f => f.classList.remove('active'));
             
-            // Get chord fingering
-            const chord = chordLibrary[chordName];
+            // Try to find the chord in library (handle variations like F#m, C#m7, etc.)
+            let chord = chordLibrary[chordName];
+            
+            // If not found, try to find a base chord
+            if (!chord) {
+                // Try removing numbers and finding base chord
+                const baseChord = chordName.replace(/[0-9]/g, '').trim();
+                chord = chordLibrary[baseChord];
+                
+                // If still not found, try just the root note
+                if (!chord) {
+                    const rootOnly = chordName.charAt(0) + (chordName.charAt(1) === '#' ? '#' : '');
+                    chord = chordLibrary[rootOnly] || chordLibrary[rootOnly + 'm'];
+                }
+            }
+            
             if (chord && chord[variation]) {
                 const fingering = chord[variation][0];
                 
@@ -1587,6 +1655,21 @@
                 // Update fingering info
                 document.getElementById('fingeringInfo').innerHTML = 
                     `<strong>Fingering:</strong> ${fingering.map((f, i) => `${['E','A','D','G','B','e'][i]}:${f}`).join(' | ')}`;
+            } else if (chord && chord.basic) {
+                // Fallback to basic variation
+                const fingering = chord.basic[0];
+                fingering.forEach((fret, string) => {
+                    if (fret > 0) {
+                        const fretDiv = document.querySelector(`[data-fret="${fret-1}"][data-string="${string}"]`);
+                        if (fretDiv) fretDiv.classList.add('active');
+                    }
+                });
+                document.getElementById('fingeringInfo').innerHTML = 
+                    `<strong>Fingering:</strong> ${fingering.map((f, i) => `${['E','A','D','G','B','e'][i]}:${f}`).join(' | ')}`;
+            } else {
+                // Chord not in library
+                document.getElementById('fingeringInfo').innerHTML = 
+                    `<strong style="color: #f59e0b;">⚠️ Chord "${chordName}" not in library</strong>`;
             }
         }
         
@@ -1705,10 +1788,12 @@
                 document.getElementById('currentChord').textContent = chordName;
                 currentChordIndex = index;
                 
-                // Update chord diagram
-                const baseChord = chordName.replace(/[0-9m7sus]/g, '').trim();
-                if (chordLibrary[baseChord]) {
-                    loadChordDiagram(baseChord, 'basic');
+                // Update chord diagram - try exact match first, then base chord
+                if (chordLibrary[chordName]) {
+                    loadChordDiagram(chordName, 'basic');
+                } else {
+                    // Try to find a matching chord
+                    loadChordDiagram(chordName, 'basic');
                 }
             }
         }
