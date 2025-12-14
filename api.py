@@ -64,6 +64,72 @@ AUDIO_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 CACHE_DURATION_HOURS = 2  # Cache audio files for 2 hours
 
 # ============================================
+# YOUTUBE COOKIES CONFIGURATION
+# ============================================
+# To fix "Sign in to confirm you're not a bot" errors:
+# 1. Export cookies from your browser (use "Get cookies.txt" extension)
+# 2. Set YOUTUBE_COOKIES env variable with the cookies.txt content
+# 3. OR set YOUTUBE_COOKIES_FILE env variable with path to cookies.txt file
+YOUTUBE_COOKIES_FILE = None
+YOUTUBE_COOKIES_CONTENT = os.getenv('YOUTUBE_COOKIES', '')
+
+def setup_youtube_cookies():
+    """Set up YouTube cookies file from environment variable"""
+    global YOUTUBE_COOKIES_FILE
+    
+    cookies_content = os.getenv('YOUTUBE_COOKIES', '')
+    cookies_file_path = os.getenv('YOUTUBE_COOKIES_FILE', '')
+    
+    # Check if cookies file path is provided
+    if cookies_file_path and os.path.exists(cookies_file_path):
+        YOUTUBE_COOKIES_FILE = cookies_file_path
+        print(f"[YOUTUBE] Using cookies file: {cookies_file_path}")
+        return True
+    
+    # Check if cookies content is provided via env variable
+    if cookies_content and len(cookies_content) > 50:  # Minimum valid cookies length
+        # Write cookies to a temporary file
+        cookies_path = Path('temp/youtube_cookies.txt')
+        cookies_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        try:
+            with open(cookies_path, 'w') as f:
+                f.write(cookies_content)
+            YOUTUBE_COOKIES_FILE = str(cookies_path)
+            print(f"[YOUTUBE] Created cookies file from env variable: {cookies_path}")
+            return True
+        except Exception as e:
+            print(f"[YOUTUBE] Failed to write cookies file: {e}")
+            return False
+    
+    print("[YOUTUBE] No cookies configured - YouTube may block requests")
+    print("[YOUTUBE] Set YOUTUBE_COOKIES env variable with cookies.txt content")
+    return False
+
+def get_yt_dlp_opts(extra_opts=None):
+    """Get yt-dlp options with cookies if available"""
+    opts = {
+        'format': 'bestaudio[ext=m4a]/bestaudio/best',
+        'quiet': True,
+        'no_warnings': True,
+        'noplaylist': True,
+        'extract_flat': False,
+    }
+    
+    # Add cookies if available
+    if YOUTUBE_COOKIES_FILE and os.path.exists(YOUTUBE_COOKIES_FILE):
+        opts['cookiefile'] = YOUTUBE_COOKIES_FILE
+    
+    # Merge extra options
+    if extra_opts:
+        opts.update(extra_opts)
+    
+    return opts
+
+# Initialize cookies on startup
+YOUTUBE_COOKIES_CONFIGURED = setup_youtube_cookies()
+
+# ============================================
 # CHORDMINIAPP CONFIGURATION
 # ============================================
 # ChordMiniApp provides ML-based chord detection with 301 chord types
@@ -362,12 +428,9 @@ def cache_youtube_audio(youtube_url_or_query, is_search=False):
     print(f"[CACHE] Downloading audio for caching...")
     
     try:
-        ydl_opts = {
-            'format': 'bestaudio[ext=m4a]/bestaudio/best',
-            'quiet': True,
-            'no_warnings': True,
+        ydl_opts = get_yt_dlp_opts({
             'outtmpl': str(AUDIO_CACHE_DIR / f"{file_hash}.%(ext)s"),
-        }
+        })
         
         if is_search:
             ydl_opts['default_search'] = 'ytsearch1:'
@@ -696,17 +759,24 @@ if not os.getenv('ACRCLOUD_ACCESS_KEY') and not os.getenv('AUDD_API_TOKEN'):
     print("   See MUSIC_RECOGNITION_SETUP.md for setup instructions")
     print("   You can still use the app by entering song info manually")
 
+# YouTube Cookies Status
+print("\nYouTube Download Status:")
+if YOUTUBE_COOKIES_CONFIGURED:
+    print("[OK] YouTube cookies configured - authenticated downloads enabled")
+else:
+    print("[WARN] YouTube cookies NOT configured")
+    print("[WARN] YouTube may block downloads with 'Sign in to confirm you're not a bot' error")
+    print("[FIX] To fix: Set YOUTUBE_COOKIES env variable with cookies.txt content")
+    print("[FIX] Or set YOUTUBE_COOKIES_FILE env variable with path to cookies.txt")
+
 print("\n[OK] All models loaded successfully!")
 
 def download_youtube_audio(url, output_path):
     """Get YouTube audio info and download if possible"""
-    ydl_opts = {
-        'format': 'bestaudio[ext=m4a]/bestaudio/best',
+    ydl_opts = get_yt_dlp_opts({
         'quiet': False,
         'no_warnings': False,
-        'noplaylist': True,  # Only download single video, not playlist
-        'extract_flat': False,
-    }
+    })
     
     try:
         # Remove playlist parameter from URL if present
@@ -818,18 +888,15 @@ def download_from_url(url, output_path=None):
     print(f"[DOWNLOAD] Detected platform: {platform}")
     print(f"[DOWNLOAD] URL: {url}")
     
-    ydl_opts = {
-        'format': 'bestaudio[ext=m4a]/bestaudio/best',  # Prefer m4a, fallback to best audio
+    ydl_opts = get_yt_dlp_opts({
         'outtmpl': output_path.replace('.m4a', '.%(ext)s'),
         'quiet': False,
         'no_warnings': False,
-        'noplaylist': True,  # Only download single item, not playlist
-        'extract_flat': False,
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'm4a',
         }],
-    }
+    })
     
     try:
         # Clean up playlist parameters from URL if present
@@ -1872,12 +1939,9 @@ def get_audio_url():
                 return jsonify({"error": "No YouTube URL provided"}), 400
             
             # Get audio stream URL without downloading
-            ydl_opts = {
+            ydl_opts = get_yt_dlp_opts({
                 'format': 'bestaudio/best',
-                'quiet': True,
-                'no_warnings': True,
-                'extract_flat': False,
-            }
+            })
             
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(youtube_url, download=False)
@@ -1901,13 +1965,10 @@ def get_audio_url():
             if not query:
                 return jsonify({"error": "No search query provided"}), 400
             
-            ydl_opts = {
+            ydl_opts = get_yt_dlp_opts({
                 'format': 'bestaudio/best',
-                'quiet': True,
-                'no_warnings': True,
                 'default_search': 'ytsearch1:',  # Search YouTube and get first result
-                'extract_flat': False,
-            }
+            })
             
             try:
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
