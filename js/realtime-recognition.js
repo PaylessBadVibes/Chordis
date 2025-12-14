@@ -129,11 +129,12 @@ class RealtimeChordRecognition {
             this.onVolumeChange(volume);
         }
 
-        // Only detect chords if there's significant sound
-        if (volume > 0.05) {
+        // Only detect chords if there's significant sound (lowered threshold for better sensitivity)
+        if (volume > 0.01) {  // Much more sensitive - works with quiet instruments
             const detectedNotes = this.detectNotes();
             
-            if (detectedNotes.length >= 2) {
+            // Can detect with just 1 note for single-note instruments
+            if (detectedNotes.length >= 1) {
                 const chord = this.identifyChord(detectedNotes);
                 
                 if (chord) {
@@ -185,8 +186,9 @@ class RealtimeChordRecognition {
         for (const peak of peaks) {
             const frequency = peak.bin * binSize;
             
-            // Only consider frequencies in musical range (60Hz - 1200Hz for most instruments)
-            if (frequency < 60 || frequency > 1200) continue;
+            // Expanded frequency range for all instruments:
+            // Bass: 40Hz+, Guitar: 80Hz+, Piano: 27Hz-4200Hz, Vocals: 80Hz-1100Hz
+            if (frequency < 40 || frequency > 4200) continue;
             
             const noteInfo = this.frequencyToNote(frequency);
             if (noteInfo) {
@@ -195,11 +197,12 @@ class RealtimeChordRecognition {
             }
         }
         
-        // Get notes with significant scores
-        const threshold = Math.max(...Object.values(noteScores)) * 0.3;
+        // Get notes with significant scores (lowered thresholds for better sensitivity)
+        const maxScore = Math.max(...Object.values(noteScores));
+        const threshold = maxScore * 0.2; // Lower threshold (was 0.3)
         
         for (const [note, score] of Object.entries(noteScores)) {
-            if (score > threshold && score > 0.1) {
+            if (score > threshold && score > 0.01) {  // Lower minimum (was 0.1)
                 detectedNotes.push({
                     note: note,
                     score: score
@@ -215,7 +218,7 @@ class RealtimeChordRecognition {
 
     findPeaks() {
         const peaks = [];
-        const threshold = -60; // dB threshold for peak detection
+        const threshold = -70; // Lower dB threshold for better sensitivity (was -60)
         
         for (let i = 2; i < this.dataArray.length - 2; i++) {
             const current = this.dataArray[i];
@@ -237,9 +240,9 @@ class RealtimeChordRecognition {
             }
         }
         
-        // Sort by amplitude and return top peaks
+        // Sort by amplitude and return top peaks (increased from 20 to 30)
         peaks.sort((a, b) => b.amplitude - a.amplitude);
-        return peaks.slice(0, 20);
+        return peaks.slice(0, 30);
     }
 
     frequencyToNote(frequency) {
@@ -268,10 +271,15 @@ class RealtimeChordRecognition {
     }
 
     identifyChord(detectedNotes) {
-        if (detectedNotes.length < 2) return null;
+        if (detectedNotes.length < 1) return null;
         
         // Get unique note names
         const noteNames = [...new Set(detectedNotes.map(n => n.note))];
+        
+        // If only 1 note detected, return it as a single note (not a chord)
+        if (noteNames.length === 1) {
+            return noteNames[0]; // Return single note like "C" or "G"
+        }
         
         // Convert notes to pitch classes (0-11)
         const pitchClasses = noteNames.map(note => this.NOTE_NAMES.indexOf(note));
