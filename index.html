@@ -2629,6 +2629,24 @@
                     audioExpiryNote: null
                 };
                 
+                // Save to localStorage for ChordAI page to access
+                try {
+                    const chordAIData = {
+                        title: `${currentAnalysis.title} - ${currentAnalysis.artist}`,
+                        chord_data: JSON.stringify({ chords: chords }),
+                        lyrics_data: JSON.stringify({ 
+                            text: lyrics.join('\n'), 
+                            words: lyrics.map((line, i) => ({ word: line, start: i * 5, end: (i + 1) * 5 }))
+                        }),
+                        audio_url: currentAnalysis.audioUrl,
+                        youtube_webpage_url: currentAnalysis.youtubeWebpageUrl
+                    };
+                    localStorage.setItem('currentSong', JSON.stringify(chordAIData));
+                    console.log('[ANALYSIS] Saved to localStorage for ChordAI:', chordAIData.title);
+                } catch (e) {
+                    console.error('[ANALYSIS] Failed to save to localStorage:', e);
+                }
+                
                 // Update UI
                 document.getElementById('modalTitle').textContent = `${currentAnalysis.title} - ${currentAnalysis.artist}`;
                 document.getElementById('songTitle').textContent = currentAnalysis.title;
