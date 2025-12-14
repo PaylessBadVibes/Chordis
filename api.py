@@ -3581,91 +3581,168 @@ def seed_tutorials():
     try:
         # Default tutorials data
         default_tutorials = [
+            # === TOOLS ===
             {
                 'title': 'Chromatone Helper - Chord Progression Tool',
-                'description': 'A powerful web-based tool to create chord progressions and arpeggios, visualize them on different instruments, and export as MIDI. Perfect for learning music theory and composition.',
+                'description': 'A powerful web-based tool to create chord progressions and arpeggios, visualize them on different instruments, and export as MIDI.',
                 'content_type': 'tool',
                 'skill_level': 'all',
-                'content': '''
-## Features
-- Create chord progressions and arpeggios using a declarative DSL
-- Visualize music on guitar, piano, bass, and more
-- Visual cues show which notes to play - no staff notation needed!
-- Export your creations as MIDI files
-- Works offline on mobile browsers
-
-## Quick Examples
-- Jazz progression: `2 5 1`
-- Pachelbel's Canon: `1 5 6 3 4 1 4 5`
-- D# major scale: `1 2 3 4 5 6 7 k=D#4`
-
-## Try It Now
-Click the link below to open the multi-track sequencer!
-                ''',
+                'content': 'Create chord progressions using a declarative DSL. Visualize on guitar, piano, bass. Export as MIDI.',
                 'video_url': 'https://iostream.github.io/chromatone-helper/multi-track-sequencer/',
                 'thumbnail': 'https://opengraph.githubassets.com/1/iostream/chromatone-helper',
                 'duration': None,
                 'order': 1,
                 'is_published': True
             },
+            # === BEGINNER GUITAR ===
             {
-                'title': 'Guitar Chord Basics for Beginners',
-                'description': 'Learn the essential open chords every guitarist needs to know: C, G, D, E, A, and Am.',
+                'title': 'Guitar Lessons for Beginners: Episode 1',
+                'description': 'Start your guitar journey with this comprehensive beginner lesson covering the basics of holding the guitar and playing your first notes.',
                 'content_type': 'video',
                 'skill_level': 'beginner',
-                'content': 'Master the fundamental open chords that form the foundation of thousands of songs.',
-                'video_url': 'https://www.youtube.com/watch?v=4nJUxrDzpoo',
-                'thumbnail': 'https://img.youtube.com/vi/4nJUxrDzpoo/maxresdefault.jpg',
-                'duration': 12,
+                'content': 'Perfect for absolute beginners who have never picked up a guitar before.',
+                'video_url': 'https://www.youtube.com/watch?v=BBz-Jyr23M4',
+                'thumbnail': 'https://img.youtube.com/vi/BBz-Jyr23M4/maxresdefault.jpg',
+                'duration': 23,
                 'order': 2,
                 'is_published': True
             },
             {
-                'title': 'Understanding Music Theory: Keys & Scales',
-                'description': 'Learn how keys and scales work together to create harmonious music.',
+                'title': 'Your First Guitar Chords - A, D, E',
+                'description': 'Learn the three easiest guitar chords that will let you play hundreds of songs.',
                 'content_type': 'video',
                 'skill_level': 'beginner',
-                'content': 'A comprehensive guide to understanding musical keys, major and minor scales.',
-                'video_url': 'https://www.youtube.com/watch?v=rgaTLrZGlk0',
-                'thumbnail': 'https://img.youtube.com/vi/rgaTLrZGlk0/maxresdefault.jpg',
-                'duration': 18,
+                'content': 'Master the A, D, and E chords - the foundation of rock and country music.',
+                'video_url': 'https://www.youtube.com/watch?v=4A5RU7sTxXE',
+                'thumbnail': 'https://img.youtube.com/vi/4A5RU7sTxXE/maxresdefault.jpg',
+                'duration': 15,
                 'order': 3,
                 'is_published': True
             },
             {
-                'title': 'Piano Chords for Beginners',
-                'description': 'Start playing piano with these essential chord shapes and progressions.',
+                'title': 'How to Play G, C, and D Chords',
+                'description': 'Essential chord trio that unlocks thousands of popular songs on guitar.',
                 'content_type': 'video',
                 'skill_level': 'beginner',
-                'content': 'Learn to play beautiful piano chords with proper finger positioning.',
-                'video_url': 'https://www.youtube.com/watch?v=fevKfNIUJLk',
-                'thumbnail': 'https://img.youtube.com/vi/fevKfNIUJLk/maxresdefault.jpg',
-                'duration': 15,
+                'content': 'These three chords are used in countless hit songs from every genre.',
+                'video_url': 'https://www.youtube.com/watch?v=pD6MQu3kPGk',
+                'thumbnail': 'https://img.youtube.com/vi/pD6MQu3kPGk/maxresdefault.jpg',
+                'duration': 12,
                 'order': 4,
                 'is_published': True
             },
+            # === STRUMMING & RHYTHM ===
             {
-                'title': 'Barre Chords Made Easy',
-                'description': 'Master barre chords with these tips and exercises for guitar players.',
+                'title': 'Strumming Patterns for Beginners',
+                'description': 'Learn the most common strumming patterns used in popular music.',
                 'content_type': 'video',
-                'skill_level': 'intermediate',
-                'content': 'Overcome the barre chord challenge with proper technique and practice methods.',
-                'video_url': 'https://www.youtube.com/watch?v=DrlF4Tc8qC8',
-                'thumbnail': 'https://img.youtube.com/vi/DrlF4Tc8qC8/maxresdefault.jpg',
-                'duration': 14,
+                'skill_level': 'beginner',
+                'content': 'Master rhythm guitar with these essential strumming techniques.',
+                'video_url': 'https://www.youtube.com/watch?v=DlOEikXqRPY',
+                'thumbnail': 'https://img.youtube.com/vi/DlOEikXqRPY/maxresdefault.jpg',
+                'duration': 18,
                 'order': 5,
+                'is_published': True
+            },
+            # === MUSIC THEORY ===
+            {
+                'title': 'Music Theory in 16 Minutes',
+                'description': 'A quick crash course covering all the essential music theory concepts.',
+                'content_type': 'video',
+                'skill_level': 'beginner',
+                'content': 'Learn scales, intervals, chords, and progressions in one concise video.',
+                'video_url': 'https://www.youtube.com/watch?v=_eKTOMhpy2w',
+                'thumbnail': 'https://img.youtube.com/vi/_eKTOMhpy2w/maxresdefault.jpg',
+                'duration': 16,
+                'order': 6,
                 'is_published': True
             },
             {
                 'title': 'Circle of Fifths Explained',
-                'description': 'Understand the circle of fifths and how to use it for songwriting and improvisation.',
+                'description': 'Understand the circle of fifths and how to use it for songwriting.',
                 'content_type': 'video',
                 'skill_level': 'intermediate',
                 'content': 'The circle of fifths is a powerful tool for understanding music theory.',
                 'video_url': 'https://www.youtube.com/watch?v=d1aJ6HixSe0',
                 'thumbnail': 'https://img.youtube.com/vi/d1aJ6HixSe0/maxresdefault.jpg',
                 'duration': 11,
-                'order': 6,
+                'order': 7,
+                'is_published': True
+            },
+            # === INTERMEDIATE GUITAR ===
+            {
+                'title': 'Barre Chords Made Easy',
+                'description': 'Master barre chords with these tips and exercises.',
+                'content_type': 'video',
+                'skill_level': 'intermediate',
+                'content': 'Overcome the barre chord challenge with proper technique.',
+                'video_url': 'https://www.youtube.com/watch?v=IlMBy1G0-no',
+                'thumbnail': 'https://img.youtube.com/vi/IlMBy1G0-no/maxresdefault.jpg',
+                'duration': 14,
+                'order': 8,
+                'is_published': True
+            },
+            {
+                'title': 'Fingerpicking for Beginners',
+                'description': 'Learn fingerpicking patterns to add depth to your guitar playing.',
+                'content_type': 'video',
+                'skill_level': 'intermediate',
+                'content': 'Essential fingerpicking techniques for acoustic guitar.',
+                'video_url': 'https://www.youtube.com/watch?v=yNOZtbQ0Aiw',
+                'thumbnail': 'https://img.youtube.com/vi/yNOZtbQ0Aiw/maxresdefault.jpg',
+                'duration': 20,
+                'order': 9,
+                'is_published': True
+            },
+            # === PIANO ===
+            {
+                'title': 'Piano Chords for Beginners',
+                'description': 'Start playing piano with essential chord shapes and progressions.',
+                'content_type': 'video',
+                'skill_level': 'beginner',
+                'content': 'Learn to play beautiful piano chords with proper finger positioning.',
+                'video_url': 'https://www.youtube.com/watch?v=827jmswqnEA',
+                'thumbnail': 'https://img.youtube.com/vi/827jmswqnEA/maxresdefault.jpg',
+                'duration': 15,
+                'order': 10,
+                'is_published': True
+            },
+            {
+                'title': 'How to Play Piano - Complete Beginner Course',
+                'description': 'Full piano course for absolute beginners - from keys to playing songs.',
+                'content_type': 'video',
+                'skill_level': 'beginner',
+                'content': 'Everything you need to start playing piano today.',
+                'video_url': 'https://www.youtube.com/watch?v=gnMDpBQ_bDQ',
+                'thumbnail': 'https://img.youtube.com/vi/gnMDpBQ_bDQ/maxresdefault.jpg',
+                'duration': 45,
+                'order': 11,
+                'is_published': True
+            },
+            # === SONGWRITING ===
+            {
+                'title': 'How to Write a Song on Guitar',
+                'description': 'Learn the basics of songwriting using common chord progressions.',
+                'content_type': 'video',
+                'skill_level': 'intermediate',
+                'content': 'Create your own songs using proven songwriting techniques.',
+                'video_url': 'https://www.youtube.com/watch?v=p8T8d01A0Lk',
+                'thumbnail': 'https://img.youtube.com/vi/p8T8d01A0Lk/maxresdefault.jpg',
+                'duration': 22,
+                'order': 12,
+                'is_published': True
+            },
+            # === UKULELE ===
+            {
+                'title': 'Ukulele Tutorial for Beginners',
+                'description': 'Learn to play ukulele from scratch with this easy tutorial.',
+                'content_type': 'video',
+                'skill_level': 'beginner',
+                'content': 'Perfect for beginners wanting to learn ukulele quickly.',
+                'video_url': 'https://www.youtube.com/watch?v=5MzpL5aVzSg',
+                'thumbnail': 'https://img.youtube.com/vi/5MzpL5aVzSg/maxresdefault.jpg',
+                'duration': 21,
+                'order': 13,
                 'is_published': True
             }
         ]
