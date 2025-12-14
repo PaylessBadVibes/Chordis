@@ -1705,7 +1705,8 @@
                         lyrics: lyricsText,
                         key: data.key || 'C Major',
                         tempo: data.tempo || 120,
-                        duration: data.duration || 180
+                        duration: data.duration || 180,
+                        audio_url: data.source_url || data.audio_url || null
                     };
                     
                     // Extract chord names
@@ -1742,12 +1743,13 @@
                         console.log('No lyrics data object');
                     }
                     
-                    // Load audio if source URL available
-                    if (data.source_url && data.source_url.length > 0) {
+                    // Load audio if source URL available (check both field names)
+                    const audioUrl = data.source_url || data.audio_url;
+                    if (audioUrl && audioUrl.length > 0) {
                         audioPlayer = document.getElementById('audioPlayer');
-                        audioPlayer.src = data.source_url;
+                        audioPlayer.src = audioUrl;
                         audioPlayer.load();
-                        console.log('Audio loaded and ready:', data.source_url);
+                        console.log('Audio loaded and ready:', audioUrl);
                     } else {
                         console.log('No audio URL available for this song');
                     }
